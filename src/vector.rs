@@ -516,6 +516,12 @@ impl Mul<f32> for Vector3D {
     }
 }
 
+impl Display for Vector3D {
+    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
+        f.write_fmt(format_args!("({x},{y},{z})", x=self.x, y=self.y, z=self.z))
+    }
+}
+
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Copy, Clone, Debug, PartialEq)]
 #[repr(C)]

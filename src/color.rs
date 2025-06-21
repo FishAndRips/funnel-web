@@ -1,4 +1,4 @@
-/// Provides operations for colors.
+//! Provides operations for colors.
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Copy, Clone, Debug, PartialEq)]

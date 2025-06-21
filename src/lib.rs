@@ -2,7 +2,8 @@
 
 pub(crate) mod util;
 
-pub mod float;
-pub mod vector;
-pub mod rectangle;
+pub mod collision_bsp;
 pub mod color;
+pub mod float;
+pub mod rectangle;
+pub mod vector;
