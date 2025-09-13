@@ -22,34 +22,34 @@ impl Matrix2x3 {
 #[derive(Copy, Clone, Debug, PartialEq, Default)]
 #[repr(C)]
 pub struct Matrix3x3 {
-    pub a: Vector3D,
-    pub b: Vector3D,
-    pub c: Vector3D
+    pub forward: Vector3D,
+    pub left: Vector3D,
+    pub up: Vector3D
 }
 
 impl Matrix3x3 {
     pub const IDENTITY: Matrix3x3 = Matrix3x3 {
-        a: Vector3D { x: 1.0, y: 0.0, z: 0.0 },
-        b: Vector3D { x: 0.0, y: 1.0, z: 0.0 },
-        c: Vector3D { x: 0.0, y: 0.0, z: 1.0 },
+        forward: Vector3D { x: 1.0, y: 0.0, z: 0.0 },
+        left: Vector3D { x: 0.0, y: 1.0, z: 0.0 },
+        up: Vector3D { x: 0.0, y: 0.0, z: 1.0 },
     };
 
     pub const fn multiply(&self, by: &Self) -> Self {
         Matrix3x3 {
-            a: Vector3D {
-                x: by.a.x * self.a.x + by.a.y * self.b.x + by.a.z * self.c.x,
-                y: by.a.x * self.a.y + by.a.y * self.b.y + by.a.z * self.c.y,
-                z: by.a.x * self.a.z + by.a.y * self.b.z + by.a.z * self.c.z
+            forward: Vector3D {
+                x: by.forward.x * self.forward.x + by.forward.y * self.left.x + by.forward.z * self.up.x,
+                y: by.forward.x * self.forward.y + by.forward.y * self.left.y + by.forward.z * self.up.y,
+                z: by.forward.x * self.forward.z + by.forward.y * self.left.z + by.forward.z * self.up.z
             },
-            b: Vector3D {
-                x: by.b.x * self.a.x + by.b.y * self.b.x + by.b.z * self.c.x,
-                y: by.b.x * self.a.y + by.b.y * self.b.y + by.b.z * self.c.y,
-                z: by.b.x * self.a.z + by.b.y * self.b.z + by.b.z * self.c.z
+            left: Vector3D {
+                x: by.left.x * self.forward.x + by.left.y * self.left.x + by.left.z * self.up.x,
+                y: by.left.x * self.forward.y + by.left.y * self.left.y + by.left.z * self.up.y,
+                z: by.left.x * self.forward.z + by.left.y * self.left.z + by.left.z * self.up.z
             },
-            c: Vector3D {
-                x: by.c.x * self.a.x + by.c.y * self.b.x + by.c.z * self.c.x,
-                y: by.c.x * self.a.y + by.c.y * self.b.y + by.c.z * self.c.y,
-                z: by.c.x * self.a.z + by.c.y * self.b.z + by.c.z * self.c.z
+            up: Vector3D {
+                x: by.up.x * self.forward.x + by.up.y * self.left.x + by.up.z * self.up.x,
+                y: by.up.x * self.forward.y + by.up.y * self.left.y + by.up.z * self.up.y,
+                z: by.up.x * self.forward.z + by.up.y * self.left.z + by.up.z * self.up.z
             }
         }
     }
@@ -61,40 +61,40 @@ impl Matrix3x3 {
 
     pub fn as_quaternion(&self) -> Quaternion {
         // http://www.euclideanspace.com/maths/geometry/rotations/conversions/matrixToQuaternion/index.htm
-        let tr = self.a.x + self.b.y + self.c.z;
+        let tr = self.forward.x + self.left.y + self.up.z;
         if tr > 0.0 {
             let s = (tr + 1.0).fw_sqrt() * 2.0; // S=4*qw
             Quaternion {
                 w: 0.25 * s,
-                x: (self.c.y - self.b.z) / s,
-                y: (self.a.z - self.c.x) / s,
-                z: (self.b.x - self.a.y) / s,
+                x: (self.up.y - self.left.z) / s,
+                y: (self.forward.z - self.up.x) / s,
+                z: (self.left.x - self.forward.y) / s,
             }
         }
-        else if (self.a.x > self.b.y) & (self.a.x > self.c.z) {
-            let s = (1.0 + self.a.x - self.b.y - self.c.z).fw_sqrt() * 2.0; // S=4*qx
+        else if (self.forward.x > self.left.y) & (self.forward.x > self.up.z) {
+            let s = (1.0 + self.forward.x - self.left.y - self.up.z).fw_sqrt() * 2.0; // S=4*qx
             Quaternion {
-                w: (self.c.y - self.b.z) / s,
+                w: (self.up.y - self.left.z) / s,
                 x: 0.25 * s,
-                y: (self.a.y + self.b.x) / s,
-                z: (self.a.z + self.c.x) / s,
+                y: (self.forward.y + self.left.x) / s,
+                z: (self.forward.z + self.up.x) / s,
             }
         }
-        else if self.b.y > self.c.z  {
-            let s = (1.0 + self.b.y - self.a.x - self.c.z).fw_sqrt() * 2.0; // S=4*qy
+        else if self.left.y > self.up.z  {
+            let s = (1.0 + self.left.y - self.forward.x - self.up.z).fw_sqrt() * 2.0; // S=4*qy
             Quaternion {
-                w: (self.a.z - self.c.x) / s,
-                x: (self.a.y + self.b.x) / s,
+                w: (self.forward.z - self.up.x) / s,
+                x: (self.forward.y + self.left.x) / s,
                 y: 0.25 * s,
-                z: (self.b.z + self.c.y) / s,
+                z: (self.left.z + self.up.y) / s,
             }
         }
         else {
-            let s = (1.0 + self.c.z - self.a.x - self.b.y).fw_sqrt() * 2.0; // S=4*qz
+            let s = (1.0 + self.up.z - self.forward.x - self.left.y).fw_sqrt() * 2.0; // S=4*qz
             Quaternion {
-                w: (self.b.x - self.a.y) / s,
-                x: (self.a.z + self.c.x) / s,
-                y: (self.b.z + self.c.y) / s,
+                w: (self.left.x - self.forward.y) / s,
+                x: (self.forward.z + self.up.x) / s,
+                y: (self.left.z + self.up.y) / s,
                 z: 0.25 * s,
             }
         }
@@ -102,9 +102,9 @@ impl Matrix3x3 {
 
     pub const fn transform_vector(&self, normal: &Vector3D) -> Vector3D {
         Vector3D {
-            x: normal.x * self.a.x + normal.y * self.b.x + normal.z * self.c.x,
-            y: normal.x * self.a.y + normal.y * self.b.y + normal.z * self.c.y,
-            z: normal.x * self.a.z + normal.y * self.b.z + normal.z * self.c.z,
+            x: normal.x * self.forward.x + normal.y * self.left.x + normal.z * self.up.x,
+            y: normal.x * self.forward.y + normal.y * self.left.y + normal.z * self.up.y,
+            z: normal.x * self.forward.z + normal.y * self.left.z + normal.z * self.up.z,
         }
     }
 }
@@ -118,7 +118,7 @@ impl Mul<Matrix3x3> for Matrix3x3 {
 }
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq, Default)]
 #[repr(C)]
 pub struct Quaternion {
     pub x: f32,
@@ -157,17 +157,17 @@ impl Quaternion {
         let zz = self.z * inv_z;
 
         Matrix3x3 {
-            a: Vector3D {
+            forward: Vector3D {
                 x: 1.0 - (yy + zz),
                 y: xy - wz,
                 z: xz + wy
             },
-            b: Vector3D {
+            left: Vector3D {
                 x: xy + wz,
                 y: 1.0 - (xx + zz),
                 z: yz - wx
             },
-            c: Vector3D {
+            up: Vector3D {
                 x: xz - wy,
                 y: yz + wx,
                 z: 1.0 - (xx + yy)
@@ -531,7 +531,7 @@ pub struct Vector2DInt {
 }
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq, Default)]
 #[repr(C)]
 pub struct Euler2D {
     pub yaw: f32,
@@ -539,7 +539,7 @@ pub struct Euler2D {
 }
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq, Default)]
 #[repr(C)]
 pub struct Euler3D {
     pub yaw: f32,
@@ -621,17 +621,17 @@ impl Debug for Angle {
 }
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq, Default)]
 #[repr(transparent)]
 pub struct CompressedFloat(pub u16);
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq, Default)]
 #[repr(transparent)]
 pub struct CompressedVector2D(pub u32);
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq, Default)]
 #[repr(transparent)]
 pub struct CompressedVector3D(pub u32);
 
@@ -641,7 +641,7 @@ pub struct CompressedVector3D(pub u32);
 #[repr(C)]
 pub struct Matrix4x3 {
     pub scale: f32,
-    pub rotation_matrix: Matrix3x3,
+    pub rotation: Matrix3x3,
     pub position: Vector3D
 }
 
@@ -649,7 +649,7 @@ impl Matrix4x3 {
     pub const fn from_matrix3x3(matrix3x3: Matrix3x3) -> Self {
         Self {
             scale: 1.0,
-            rotation_matrix: matrix3x3,
+            rotation: matrix3x3,
             position: Vector3D { x: 0.0, y: 0.0, z: 0.0 }
         }
     }
@@ -657,15 +657,15 @@ impl Matrix4x3 {
         Self {
             scale: self.scale * by.scale,
             position: Vector3D {
-                x: (by.position.x * self.rotation_matrix.a.x + by.position.y * self.rotation_matrix.b.x + by.position.z * self.rotation_matrix.c.x) * self.scale + self.position.x,
-                y: (by.position.x * self.rotation_matrix.a.y + by.position.y * self.rotation_matrix.b.y + by.position.z * self.rotation_matrix.c.y) * self.scale + self.position.y,
-                z: (by.position.x * self.rotation_matrix.a.z + by.position.y * self.rotation_matrix.b.z + by.position.z * self.rotation_matrix.c.z) * self.scale + self.position.z
+                x: (by.position.x * self.rotation.forward.x + by.position.y * self.rotation.left.x + by.position.z * self.rotation.up.x) * self.scale + self.position.x,
+                y: (by.position.x * self.rotation.forward.y + by.position.y * self.rotation.left.y + by.position.z * self.rotation.up.y) * self.scale + self.position.y,
+                z: (by.position.x * self.rotation.forward.z + by.position.y * self.rotation.left.z + by.position.z * self.rotation.up.z) * self.scale + self.position.z
             },
-            rotation_matrix: self.rotation_matrix.multiply(&by.rotation_matrix)
+            rotation: self.rotation.multiply(&by.rotation)
         }
     }
     pub const fn transform_normal(&self, normal: &Vector3D) -> Vector3D {
-        self.rotation_matrix.transform_vector(normal)
+        self.rotation.transform_vector(normal)
     }
     pub const fn transform_plane(&self, plane: &Plane3D) -> Plane3D {
         let vector = self.transform_normal(&plane.vector);
@@ -676,7 +676,7 @@ impl Matrix4x3 {
     }
     pub fn transform_vector(&self, vector: &Vector3D) -> Vector3D {
         let point_scaled = *vector * self.scale;
-        self.rotation_matrix.transform_vector(&point_scaled)
+        self.rotation.transform_vector(&point_scaled)
     }
     pub fn transform_point(&self, point: &Vector3D) -> Vector3D {
         self.transform_vector(point) + self.position
@@ -693,7 +693,7 @@ impl Matrix4x3 {
         Self {
             scale: (1.0 - by) * self.scale + by * with.scale,
             position: self.position.linear_interpolated(with.position, by),
-            rotation_matrix: self.rotation_matrix.interpolated(with.rotation_matrix, by)
+            rotation: self.rotation.interpolated(with.rotation, by)
         }
     }
 }

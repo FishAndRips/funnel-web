@@ -1,7 +1,7 @@
 //! Provides operations for colors.
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq, Default)]
 #[repr(C)]
 pub struct ColorARGB {
     /// Alpha channel in the range of `[0..1]`
@@ -33,7 +33,7 @@ impl ColorARGB {
 }
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq, Default)]
 #[repr(C)]
 pub struct ColorRGB {
     /// Red channel in the range of `[0..1]`
@@ -71,4 +71,4 @@ impl From<ColorRGB> for ColorARGB {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Copy, Clone, Debug, PartialEq, Default)]
 #[repr(C)]
-pub struct Pixel32(u32);
+pub struct Pixel32(pub u32);
