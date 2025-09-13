@@ -7,3 +7,4 @@ pub mod color;
 pub mod float;
 pub mod rectangle;
 pub mod vector;
+pub mod id;
