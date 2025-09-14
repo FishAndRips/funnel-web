@@ -1,5 +1,5 @@
 use core::ffi::{c_char, CStr};
-use core::fmt::{Display, Formatter};
+use core::fmt::{Debug, Display, Formatter};
 
 /// Null-terminated multi character ASCII string.
 #[derive(Copy, Clone, PartialEq, PartialOrd, Ord, Eq)]
@@ -123,6 +123,12 @@ pub type String32 = ASCIIString<32>;
 impl<const LEN: usize> Display for ASCIIString<LEN> {
     fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         f.write_str(self.as_str())
+    }
+}
+
+impl<const LEN: usize> Debug for ASCIIString<LEN> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
+        Debug::fmt(self.as_str(), f)
     }
 }
 
