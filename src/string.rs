@@ -114,6 +114,12 @@ impl<const LEN: usize> ASCIIString<LEN> {
     }
 }
 
+impl<const LEN: usize> Default for ASCIIString<LEN> {
+    fn default() -> Self {
+        Self([0u8; LEN])
+    }
+}
+
 /// Common string type used in tag data.
 ///
 /// This is often used for identifying reflexives, but it has other purposes, too, such as being
