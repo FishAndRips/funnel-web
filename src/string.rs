@@ -193,12 +193,15 @@ impl<const LEN: usize> PartialEq<ASCIIString<LEN>> for String {
 
 #[cfg(test)]
 mod test {
+    use alloc::string::ToString;
     use crate::string::String32;
 
     #[test]
     fn string32_test() {
         assert_eq!(String32::new(), "");
         assert_eq!(String32::from_str("this is a string").unwrap(), "this is a string");
-        assert_eq!(String32::from_str("this is a string").unwrap(), "this is a string");
+        assert_eq!(String32::from_str("this is a string").unwrap().to_string(), "this is a string");
+        assert_eq!(String32::from_str("this is a string").unwrap().as_str(), "this is a string");
+        assert_eq!(String32::from_str("this is a string").unwrap().as_cstr().to_str().unwrap(), "this is a string");
     }
 }
