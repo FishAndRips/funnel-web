@@ -1,7 +1,12 @@
+use alloc::string::String;
 use core::ffi::{c_char, CStr};
 use core::fmt::{Debug, Display, Formatter};
 
 /// Null-terminated multi character ASCII string.
+///
+/// This string is guaranteed to be entirely composed of ASCII characters without any control
+/// characters. Also, its length is always less than `LEN`, with the last byte in the buffer being
+/// `0x00` (as well as all bytes between the end of the string and the last byte in the buffer).
 #[derive(Copy, Clone, PartialEq, PartialOrd, Ord, Eq)]
 #[repr(transparent)]
 pub struct ASCIIString<const LEN: usize>([u8; LEN]);
@@ -17,7 +22,8 @@ impl<const LEN: usize> ASCIIString<LEN> {
 
     /// Instantiate an ASCIIString from bytes.
     ///
-    /// Returns `None` if the bytes contain non-ascii characters or are not null terminated.
+    /// Returns `None` if the bytes contain control or non-ASCII characters or the string is not
+    /// null terminated.
     ///
     /// # Panics
     ///
@@ -89,34 +95,33 @@ impl<const LEN: usize> ASCIIString<LEN> {
 
     /// Get the length of the string.
     pub const fn string_len(&self) -> usize {
-        let mut q = 0usize;
-        while q < LEN {
-            if self.0[q] == 0 {
-                return q;
-            }
-            q += 1;
-        }
-        panic!("LEN reached (string somehow not null terminated; memory corruption?)")
+        self.as_cstr().to_bytes().len()
     }
 
     /// Get the string data as a string.
     #[inline(always)]
     pub const fn as_str(&self) -> &str {
-        // SAFETY: All constructors ensure that this is a null-terminated C string.
-        let c_string = unsafe {
-            CStr::from_ptr(self.0.as_ptr() as *const c_char)
-        };
+        let str_bytes = self.as_cstr().to_bytes();
 
         // SAFETY: All constructors also ensure this is ASCII, thus it should also be UTF-8.
         unsafe {
-            core::str::from_utf8_unchecked(c_string.to_bytes())
+            core::str::from_utf8_unchecked(str_bytes)
+        }
+    }
+
+    /// Get the string data as a CStr.
+    #[inline(always)]
+    pub const fn as_cstr(&self) -> &CStr {
+        // SAFETY: All constructors ensure that this is a null-terminated C string.
+        unsafe {
+            CStr::from_ptr(self.0.as_ptr() as *const c_char)
         }
     }
 }
 
 impl<const LEN: usize> Default for ASCIIString<LEN> {
     fn default() -> Self {
-        Self([0u8; LEN])
+        Self::new()
     }
 }
 
@@ -138,15 +143,62 @@ impl<const LEN: usize> Debug for ASCIIString<LEN> {
     }
 }
 
+impl<const LEN: usize> AsRef<str> for ASCIIString<LEN> {
+    fn as_ref(&self) -> &str {
+        self.as_str()
+    }
+}
+
+impl<const LEN: usize> AsRef<CStr> for ASCIIString<LEN> {
+    fn as_ref(&self) -> &CStr {
+        self.as_cstr()
+    }
+}
+
+impl<const LEN: usize> PartialEq<str> for ASCIIString<LEN> {
+    fn eq(&self, other: &str) -> bool {
+        self.as_str() == other
+    }
+}
+
+impl<const LEN: usize> PartialEq<ASCIIString<LEN>> for str {
+    fn eq(&self, other: &ASCIIString<LEN>) -> bool {
+        self == other.as_str()
+    }
+}
+
+impl<const LEN: usize> PartialEq<&str> for ASCIIString<LEN> {
+    fn eq(&self, other: &&str) -> bool {
+        self.as_str() == *other
+    }
+}
+
+impl<const LEN: usize> PartialEq<ASCIIString<LEN>> for &str {
+    fn eq(&self, other: &ASCIIString<LEN>) -> bool {
+        *self == other.as_str()
+    }
+}
+
+impl<const LEN: usize> PartialEq<String> for ASCIIString<LEN> {
+    fn eq(&self, other: &String) -> bool {
+        self.as_str() == other
+    }
+}
+
+impl<const LEN: usize> PartialEq<ASCIIString<LEN>> for String {
+    fn eq(&self, other: &ASCIIString<LEN>) -> bool {
+        self == other.as_str()
+    }
+}
+
 #[cfg(test)]
 mod test {
-    use alloc::string::ToString;
     use crate::string::String32;
 
     #[test]
     fn string32_test() {
-        assert_eq!(String32::new().as_str(), "");
-        assert_eq!(String32::from_str("this is a string").unwrap().as_str(), "this is a string");
-        assert_eq!(String32::from_str("this is a string").unwrap().to_string(), "this is a string");
+        assert_eq!(String32::new(), "");
+        assert_eq!(String32::from_str("this is a string").unwrap(), "this is a string");
+        assert_eq!(String32::from_str("this is a string").unwrap(), "this is a string");
     }
 }
