@@ -6,9 +6,12 @@ use core::fmt::{Debug, Display, Formatter};
 
 /// Null-terminated multi character ASCII string.
 ///
-/// This string is guaranteed to be entirely composed of ASCII characters without any control
-/// characters. Also, its length is always less than `LEN`, with the last byte in the buffer being
-/// `0x00` (as well as all bytes between the end of the string and the last byte in the buffer).
+/// This string has the following guarantees:
+/// * It is entirely composed of ASCII characters without any control characters. As such, all
+///   strings valid for `ASCIIString` are UTF-8 (but not vice versa).
+/// * Its length is less than `LEN`
+/// * All bytes in the buffer after the last byte up to the end of the buffer are null bytes (i.e.
+///   `0x00` bytes).
 #[derive(Copy, Clone, PartialEq, PartialOrd, Ord, Eq)]
 #[repr(transparent)]
 pub struct ASCIIString<const LEN: usize>([u8; LEN]);
@@ -26,6 +29,8 @@ impl<const LEN: usize> ASCIIString<LEN> {
     ///
     /// Returns `None` if the bytes contain control or non-ASCII characters or the string is not
     /// null terminated.
+    ///
+    /// All bytes after the first null byte will be zeroed out.
     ///
     /// # Panics
     ///
@@ -196,14 +201,62 @@ impl<const LEN: usize> PartialEq<ASCIIString<LEN>> for String {
 #[cfg(test)]
 mod test {
     use alloc::string::ToString;
-    use crate::string::String32;
+    use core::iter::once;
+    use crate::string::{ASCIIString, String32};
+
+    type String8 = ASCIIString<8>;
 
     #[test]
-    fn string32_test() {
+    fn rust_string_equality() {
         assert_eq!(String32::new(), "");
         assert_eq!(String32::from_str("this is a string").unwrap(), "this is a string");
         assert_eq!(String32::from_str("this is a string").unwrap().to_string(), "this is a string");
         assert_eq!(String32::from_str("this is a string").unwrap().as_str(), "this is a string");
         assert_eq!(String32::from_str("this is a string").unwrap().as_cstr().to_str().unwrap(), "this is a string");
+    }
+
+    #[test]
+    fn from_str() {
+        // Valid
+        assert_eq!(String32::from_str("").unwrap(), "");
+        assert_eq!(String32::from_str("This is a string!").unwrap(), "This is a string!");
+        assert_eq!(String8::from_str("1234567").unwrap(), "1234567", "ASCIIString<8> should support seven characters");
+
+        // Too long
+        assert_eq!(String8::from_str("12345678"), None, "ASCIIString<8> should only allow at most seven characters");
+
+        // Non-ASCII characters
+        assert_eq!(String32::from_str("jalapeño"), None, "ñ is not an ASCII character");
+        assert_eq!(String32::from_str("süß"), None, "ü and ß are not ASCII characters");
+    }
+
+    #[test]
+    fn from_bytes() {
+        // all bytes after the first null byte get zeroed out
+        let empty_string = String8::from_bytes([0x00, b'b', b'c', b'd', 0x00, b'f', 0x00, 0x00]).unwrap();
+        assert_eq!(empty_string, "", "should be empty string");
+        assert_eq!(empty_string.bytes(), &[0u8; 8], "should be zeroed out");
+
+        let abcd = String8::from_bytes([b'a', b'b', b'c', b'd', 0x00, b'f', 0x00, 0x00]).unwrap();
+        assert_eq!(abcd, "abcd", "should be abcd");
+        assert_eq!(abcd.bytes(), &[b'a', b'b', b'c', b'd', 0x00, 0x00, 0x00, 0x00], "should be zeroed out");
+
+        // The string must be null terminated.
+        assert_eq!(String8::from_bytes([b'a', b'b', b'c', b'd', b'e', b'f', b'g', b'h']), None, "not null terminated");
+
+        // Control characters (besides null) are banned.
+        for i in (0x01..=0x1F).chain(once(0x7F)) {
+            assert_eq!(String8::from_bytes([i, b'b', b'c', b'd', 0x00, 0x00, 0x00, 0x00]), None, "0x{i:02X} is a banned control character and should not be permitted in ASCIIString but it was");
+        }
+
+        // All characters between 0x20 (' ') and 0x7E ('~') inclusive are allowed, as is the null character (since it terminates the string).
+        for i in (0x20..=0x7E).chain(once(0x00)) {
+            assert!(String8::from_bytes([i, b'b', b'c', b'd', 0x00, 0x00, 0x00, 0x00]).is_some(), "0x{i:02X} should be permitted in ASCIIString but it wasn't");
+        }
+
+        // Non-ASCII characters (≥0x80) are banned.
+        for i in 0x80..=u8::MAX {
+            assert_eq!(String8::from_bytes([i, b'b', b'c', b'd', 0x00, 0x00, 0x00, 0x00]), None, "0x{i:02X} is not ASCII and thus should not be permitted in ASCIIString but it was");
+        }
     }
 }
