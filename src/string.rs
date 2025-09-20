@@ -1,3 +1,5 @@
+//! String primitives.
+
 use alloc::string::String;
 use core::ffi::{c_char, CStr};
 use core::fmt::{Debug, Display, Formatter};

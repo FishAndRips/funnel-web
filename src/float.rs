@@ -10,8 +10,13 @@ use core::cmp::Ordering;
 /// 
 /// These are guaranteed to be accurate to the way Halo calculates its floats, at least on SSE.
 pub trait FloatOps: Copy + Copy {
+    /// Approximately equal to pi.
     const FW_PI: Self;
+
+    /// Approximately equal to 0.5 times pi.
     const FW_HALF_PI: Self;
+
+    /// Approximately equal to 0.25 times pi.
     const FW_QUARTER_PI: Self;
 
     /// Calculate the square root of a float.
@@ -79,15 +84,7 @@ impl FloatOps for f32 {
     const FW_PI: Self = core::f32::consts::PI;
     const FW_HALF_PI: Self = core::f32::consts::PI / 2.0;
     const FW_QUARTER_PI: Self = core::f32::consts::PI / 4.0;
-    
-    #[inline]
-    fn fw_powf(self, exponent: Self) -> Self {
-        libm::powf(self, exponent)
-    }
-    #[inline]
-    fn fw_powi(self, exponent: i32) -> Self {
-        self.fw_powf(exponent as f32)
-    }
+
     #[inline]
     fn fw_sqrt(self) -> Self {
         libm::sqrtf(self)
@@ -95,6 +92,14 @@ impl FloatOps for f32 {
     #[inline]
     fn fw_inverse_sqrt(self) -> Self {
         1.0 / self.fw_sqrt()
+    }
+    #[inline]
+    fn fw_powi(self, exponent: i32) -> Self {
+        self.fw_powf(exponent as f32)
+    }
+    #[inline]
+    fn fw_powf(self, exponent: Self) -> Self {
+        libm::powf(self, exponent)
     }
     #[inline]
     fn fw_fabs(self) -> Self {

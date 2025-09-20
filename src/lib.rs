@@ -1,3 +1,9 @@
+//! # Funnel Web
+//! 
+//! TODO: Add a crate doc.
+
+#![warn(missing_docs)]
+
 #![no_std]
 extern crate alloc;
 

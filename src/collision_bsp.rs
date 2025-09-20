@@ -231,8 +231,11 @@ impl core::fmt::Display for CollisionBSPError {
 #[derive(Copy, Clone, PartialEq, Debug)]
 #[repr(C)]
 pub struct CollisionBSP3DNode {
+    /// The node/leaf in front of this node.
     pub front_child: CollisionBSP3DNodeIndex,
+    /// The node/leaf behind this node.
     pub back_child: CollisionBSP3DNodeIndex,
+    /// The index of the plane this node is on.
     pub plane_index: usize
 }
 
@@ -270,7 +273,9 @@ impl CollisionBSP3DNodeIndex {
 #[derive(Copy, Clone, PartialEq, Debug)]
 #[repr(u8)]
 pub enum CollisionBSP3DNodeIndexType {
+    /// Represents another 3D node.
     Node,
+    /// Represents a 3D leaf
     Leaf
 }
 
@@ -300,7 +305,9 @@ impl CollisionBSP2DNodeIndex {
 #[derive(Copy, Clone, PartialEq, Debug)]
 #[repr(u8)]
 pub enum CollisionBSP2DNodeIndexType {
+    /// Represents a 2D node.
     Node,
+    /// Represents a surface.
     Surface
 }
 
@@ -312,6 +319,7 @@ pub enum CollisionBSP2DNodeIndexType {
 /// this.
 #[derive(Copy, Clone, PartialEq, Debug)]
 #[repr(C)]
+#[expect(missing_docs)] // TODO
 pub struct CollisionBSPLeaf {
     pub contains_double_sided_surfaces: bool,
     pub bsp_2d_node_reference_start: usize,
@@ -327,7 +335,10 @@ pub struct CollisionBSPLeaf {
 #[derive(Copy, Clone, PartialEq, Debug)]
 #[repr(C)]
 pub struct BSP2DNodeReference {
+    /// Represents the plane.
     pub plane: usize,
+
+    /// Represents the first node.
     pub node: CollisionBSP2DNodeIndex
 }
 
@@ -339,6 +350,7 @@ pub struct BSP2DNodeReference {
 /// this.
 #[derive(Copy, Clone, PartialEq, Debug)]
 #[repr(C)]
+#[expect(missing_docs)] // TODO
 pub struct CollisionBSP2DNode {
     pub plane: Plane2D,
     pub left_child: CollisionBSP2DNodeIndex,
@@ -355,6 +367,10 @@ pub struct CollisionBSP2DNode {
 #[derive(Copy, Clone, PartialEq, Debug)]
 #[repr(C)]
 pub struct CollisionBSPSurface {
+    /// Plane index the surface lies on.
     pub plane: usize,
+
+    /// Material index.
+    // TODO: This should be an enum?
     pub material: u16
 }

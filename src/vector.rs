@@ -1,26 +1,32 @@
-/// Provides operations for vectors.
+//! Defines vectors and vector math.
 
 use core::fmt::{Debug, Display, Formatter};
 use core::ops::{Add, Mul, Neg, Sub};
 use crate::float::FloatOps;
 
+/// Minimum allowed magnitude to try to normalize floats, avoiding division by zero (or a really low number).
 pub const MIN_MAGNITUDE: f32 = 0.0001;
 
+/// A matrix with just the forward and up components.
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Copy, Clone, Debug, PartialEq, Default)]
 #[repr(C)]
+#[expect(missing_docs)]
 pub struct Matrix2x3 {
     pub forward: Vector3D,
     pub up: Vector3D
 }
 
 impl Matrix2x3 {
+    /// Identity matrix.
     pub const IDENTITY: Matrix2x3 = Matrix2x3 { forward: Vector3D { x: 1.0, y: 0.0, z: 0.0 }, up: Vector3D { x: 0.0, y: 0.0, z: 1.0 } };
 }
 
+/// A full 3x3 matrix.
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Copy, Clone, Debug, PartialEq, Default)]
 #[repr(C)]
+#[expect(missing_docs)]
 pub struct Matrix3x3 {
     pub forward: Vector3D,
     pub left: Vector3D,
@@ -28,12 +34,14 @@ pub struct Matrix3x3 {
 }
 
 impl Matrix3x3 {
+    /// Identity matrix.
     pub const IDENTITY: Matrix3x3 = Matrix3x3 {
         forward: Vector3D { x: 1.0, y: 0.0, z: 0.0 },
         left: Vector3D { x: 0.0, y: 1.0, z: 0.0 },
         up: Vector3D { x: 0.0, y: 0.0, z: 1.0 },
     };
 
+    /// Multiply two matrices.
     pub const fn multiply(&self, by: &Self) -> Self {
         Matrix3x3 {
             forward: Vector3D {
@@ -59,6 +67,7 @@ impl Matrix3x3 {
         self.as_quaternion().interpolated(with.as_quaternion(), by).into()
     }
 
+    /// Convert the matrix to a quaternion.
     pub fn as_quaternion(&self) -> Quaternion {
         // http://www.euclideanspace.com/maths/geometry/rotations/conversions/matrixToQuaternion/index.htm
         let tr = self.forward.x + self.left.y + self.up.z;
@@ -100,6 +109,7 @@ impl Matrix3x3 {
         }
     }
 
+    /// Transform the vector.
     pub const fn transform_vector(&self, normal: &Vector3D) -> Vector3D {
         Vector3D {
             x: normal.x * self.forward.x + normal.y * self.left.x + normal.z * self.up.x,
@@ -117,9 +127,11 @@ impl Mul<Matrix3x3> for Matrix3x3 {
     }
 }
 
+/// Represents a 3D angle using four real numbers.
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Copy, Clone, Debug, PartialEq, Default)]
 #[repr(C)]
+#[expect(missing_docs)]
 pub struct Quaternion {
     pub x: f32,
     pub y: f32,
@@ -128,12 +140,15 @@ pub struct Quaternion {
 }
 
 impl Quaternion {
+    /// Identity quaternion.
     pub const IDENTITY: Self = Self { x: 0.0, y: 0.0, z: 0.0, w: 1.0 };
 
+    /// Square length of the quaternion.
     pub const fn square_length(self) -> f32 {
         self.dot(self)
     }
 
+    /// Convert the quaternion to a matrix.
     pub const fn as_matrix(self) -> Matrix3x3 {
         let square_length = self.square_length();
         if square_length.is_nan() || square_length == 0.0 {
@@ -174,6 +189,8 @@ impl Quaternion {
             }
         }
     }
+
+    /// Normalize the quaternion.
     pub fn normalized(self) -> Quaternion {
         let square_length = self.square_length();
         if square_length <= 0.0 {
@@ -330,33 +347,69 @@ impl From<Quaternion> for Matrix3x3 {
     }
 }
 
+/// Represents a vector with two components.
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Copy, Clone, Debug, PartialEq, Default)]
 #[repr(C)]
+#[expect(missing_docs)]
 pub struct Vector2D {
     pub x: f32,
     pub y: f32
 }
 
 impl Vector2D {
-    pub fn is_valid(self) -> bool {
+    /// Vector with all components set to 0.
+    pub const ZEROED: Self = Vector2D { x: 0.0, y: 0.0 };
+
+    /// Return `true` if all components of the vector are valid.
+    #[inline(always)]
+    pub const fn is_valid(self) -> bool {
         !self.x.is_nan() && !self.y.is_nan()
     }
+
+    /// Return the dot product with another vector.
+    #[inline(always)]
     pub const fn dot(self, other: &Self) -> f32 {
         self.x * other.x + self.y * other.y
     }
+
+    /// Get the magnitude squared.
+    ///
+    /// This is cheaper than calling [`magnitude`](Self::magnitude).
+    #[inline(always)]
     pub const fn magnitude_squared(self) -> f32 {
         self.dot(&self)
     }
+
+    /// Get the magnitude.
+    ///
+    /// This is more expensive than calling [`magnitude_squared`](Self::magnitude_squared) due to
+    /// having to square root the result.
+    #[inline(always)]
     pub fn magnitude(self) -> f32 {
         self.dot(&self).fw_sqrt()
     }
+
+    /// Multiply all components with `amount`.
+    #[inline(always)]
     pub const fn scaled(self, amount: f32) -> Self {
         Self {
             x: self.x * amount,
             y: self.y * amount
         }
     }
+
+    /// Negate the signs of all components of this vector.
+    #[inline(always)]
+    pub const fn negated(self) -> Self {
+        Self {
+            x: -self.x,
+            y: -self.y
+        }
+    }
+
+    /// Convert the vector to a unit vector, if possible.
+    #[inline]
     pub fn normalized(self) -> Option<Self> {
         let magnitude = self.magnitude();
         if magnitude < MIN_MAGNITUDE {
@@ -367,15 +420,19 @@ impl Vector2D {
             Some(self.scaled(1.0 / magnitude))
         }
     }
+
+    /// Calculate the cross product with another vector (as 3D vectors) and return the Z coordinate.
+    #[inline(always)]
     pub const fn cross_product(self, other: Self) -> f32 {
-        // Only calculates a scalar, as you need a third dimension to get a vector...
         self.x * other.y - self.y * other.x
     }
 }
 
+/// Represents a cuboid.
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Copy, Clone, Debug, PartialEq, Default)]
 #[repr(C)]
+#[expect(missing_docs)]
 pub struct Cube3D {
     pub top: f32,
     pub left: f32,
@@ -385,9 +442,11 @@ pub struct Cube3D {
     pub back: f32
 }
 
+/// Represents a vector with four components.
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Copy, Clone, Debug, PartialEq, Default)]
 #[repr(C)]
+#[expect(missing_docs)]
 pub struct Vector4D {
     pub x: f32,
     pub y: f32,
@@ -395,9 +454,11 @@ pub struct Vector4D {
     pub w: f32
 }
 
+/// Represents a projection matrix.
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Copy, Clone, Debug, PartialEq, Default)]
 #[repr(C)]
+#[expect(missing_docs)]
 pub struct ProjectionMatrix {
     pub x: Vector4D,
     pub y: Vector4D,
@@ -405,9 +466,11 @@ pub struct ProjectionMatrix {
     pub w: Vector4D
 }
 
+/// Represents a vector with three components.
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Copy, Clone, Debug, PartialEq)]
 #[repr(C)]
+#[expect(missing_docs)]
 pub struct Vector3D {
     pub x: f32,
     pub y: f32,
@@ -415,13 +478,21 @@ pub struct Vector3D {
 }
 
 impl Vector3D {
+    /// Vector with all components set to 0.
     pub const ZEROED: Self = Vector3D { x: 0.0, y: 0.0, z: 0.0 };
+
+    /// Return `true` if all components of the vector are valid.
+    #[inline(always)]
     pub const fn is_valid(self) -> bool {
         !self.x.is_nan() && !self.y.is_nan() && !self.z.is_nan()
     }
+
+    /// Return the dot product with another vector.
     pub const fn dot(self, other: &Vector3D) -> f32 {
         self.x * other.x + self.y * other.y + self.z * other.z
     }
+
+    /// Multiply all components with `amount`.
     pub const fn scaled(self, by: f32) -> Self {
         Self {
             x: self.x * by,
@@ -429,8 +500,20 @@ impl Vector3D {
             z: self.z * by
         }
     }
+
+    /// Get the magnitude squared.
+    ///
+    /// This is cheaper than calling [`magnitude`](Self::magnitude).
     pub const fn magnitude_squared(self) -> f32 {
         self.dot(&self)
+    }
+
+    /// Get the magnitude.
+    ///
+    /// This is more expensive than calling [`magnitude_squared`](Self::magnitude_squared) due to
+    /// having to square root the result.
+    pub fn magnitude(self) -> f32 {
+        self.magnitude_squared().fw_sqrt()
     }
 
     /// Interpolate this vector with another one by `by` amount.
@@ -441,9 +524,7 @@ impl Vector3D {
         self * b + with * a
     }
 
-    pub fn magnitude(self) -> f32 {
-        self.magnitude_squared().fw_sqrt()
-    }
+    /// Convert the vector to a unit vector, if possible.
     pub fn normalized(self) -> Option<Self> {
         let magnitude = self.magnitude();
         if magnitude < MIN_MAGNITUDE {
@@ -454,6 +535,9 @@ impl Vector3D {
             Some(self.scaled(1.0 / magnitude))
         }
     }
+
+    /// Negate the signs of all components of this vector.
+    #[inline(always)]
     pub const fn negated(self) -> Self {
         Self {
             x: -self.x,
@@ -461,6 +545,9 @@ impl Vector3D {
             z: -self.z
         }
     }
+
+    /// Calculate the cross product with another vector (as 3D vectors) and return the Z coordinate.
+    #[inline(always)]
     pub const fn cross_product(self, other: Self) -> Self {
         Self {
             x: self.y * other.z - self.z * other.y,
@@ -522,61 +609,76 @@ impl Display for Vector3D {
     }
 }
 
+/// Represents a two-component vector using 16-bit ints (i.e. an X and Y coordinate in pixels).
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Copy, Clone, Debug, PartialEq, Default)]
 #[repr(C)]
+#[expect(missing_docs)]
 pub struct Vector2DInt {
     pub x: i16,
     pub y: i16
 }
 
+/// Represents a rotation using an Euler angle, besides roll.
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Copy, Clone, Debug, PartialEq, Default)]
 #[repr(C)]
+#[expect(missing_docs)]
 pub struct Euler2D {
     pub yaw: f32,
     pub pitch: f32
 }
 
+/// Represents a rotation using an Euler angle.
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Copy, Clone, Debug, PartialEq, Default)]
 #[repr(C)]
+#[expect(missing_docs)]
 pub struct Euler3D {
     pub yaw: f32,
     pub pitch: f32,
     pub roll: f32
 }
 
+/// Represents a 2D plane.
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Copy, Clone, Debug, PartialEq, Default)]
 #[repr(C)]
+#[expect(missing_docs)]
 pub struct Plane2D {
     pub offset: f32,
     pub vector: Vector2D
 }
 
+/// Represents a 3D plane.
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Copy, Clone, Debug, PartialEq, Default)]
 #[repr(C)]
+#[expect(missing_docs)]
 pub struct Plane3D {
     pub vector: Vector3D,
     pub offset: f32,
 }
 impl Plane3D {
+    /// Get the distance `point` is from this plane.
     pub const fn distance_to_point(self, point: Vector3D) -> f32 {
         point.dot(&self.vector) - self.offset
     }
 }
 
+/// Angle value.
+///
+/// Internally represents a value in radians.
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Copy, Clone, PartialEq, Default)]
 #[repr(transparent)]
 pub struct Angle(pub f32);
 
 impl Angle {
+    /// The default horizontal FoV in degrees (70 degrees) for the game.
     pub const DEFAULT_HORIZONTAL_FOV: Angle = Angle::from_degrees(70.0);
 
-    // ~55.41 deg
+    /// The default vertical FoV in degrees (~55.41 degrees) for the game.
     pub const DEFAULT_VERTICAL_FOV: Angle = Angle::from_radians(0.96713803047123473857584761442933284839190937900591636936069359052097036749);
 
     /// Calculate a vertical FoV from a horizontal FoV.
@@ -596,15 +698,26 @@ impl Angle {
         self.calculate_vertical_fov(from_aspect_ratio).calculate_horizontal_fov(to_aspect_ratio)
     }
 
+    /// Compute an angle from the given degrees.
     pub const fn from_degrees(deg: f32) -> Self {
         Self::from_radians(deg.to_radians())
     }
+
+    /// Compute an angle from the given radians.
+    ///
+    /// This is provided for completion, as this is simply the same thing as using `Self(rad)`.
     pub const fn from_radians(rad: f32) -> Self {
         Self(rad)
     }
+
+    /// Get the value as degrees.
     pub const fn degrees(self) -> f32 {
         self.0.to_degrees()
     }
+
+    /// Get the value as radians.
+    ///
+    /// This is provided for completion, as this is simply the same thing as using `self.0`.
     pub const fn radians(self) -> f32 {
         self.0
     }
@@ -620,25 +733,35 @@ impl Debug for Angle {
     }
 }
 
+/// Represents a compressed 16-bit float.
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Copy, Clone, Debug, PartialEq, Default)]
 #[repr(transparent)]
 pub struct CompressedFloat(pub u16);
 
+/// Represents a [`Vector2D`] compressed into 32 bits.
+///
+/// Internally it is `Y8.X8`
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Copy, Clone, Debug, PartialEq, Default)]
 #[repr(transparent)]
 pub struct CompressedVector2D(pub u32);
 
+/// Represents a [`Vector3D`] compressed into 32 bits.
+///
+/// Internally it is `Z10.Y11.X11`
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Copy, Clone, Debug, PartialEq, Default)]
 #[repr(transparent)]
 pub struct CompressedVector3D(pub u32);
 
 /// Matrix3x3 with position and scale component.
+///
+/// Represents a basic 3D transformation.
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Copy, Clone, Debug, PartialEq, Default)]
 #[repr(C)]
+#[expect(missing_docs)]
 pub struct Matrix4x3 {
     pub scale: f32,
     pub rotation: Matrix3x3,
@@ -646,13 +769,16 @@ pub struct Matrix4x3 {
 }
 
 impl Matrix4x3 {
+    /// Instantiate using a [`Matrix3x3`], setting `scale` to 1.0 and `position` to [`Vector3D::ZEROED`]
     pub const fn from_matrix3x3(matrix3x3: Matrix3x3) -> Self {
         Self {
             scale: 1.0,
             rotation: matrix3x3,
-            position: Vector3D { x: 0.0, y: 0.0, z: 0.0 }
+            position: Vector3D::ZEROED
         }
     }
+
+    /// Multiply with another transformation.
     pub const fn multiply(&self, by: &Self) -> Self {
         Self {
             scale: self.scale * by.scale,
@@ -664,9 +790,13 @@ impl Matrix4x3 {
             rotation: self.rotation.multiply(&by.rotation)
         }
     }
+
+    /// Transform a normal using rotation.
     pub const fn transform_normal(&self, normal: &Vector3D) -> Vector3D {
         self.rotation.transform_vector(normal)
     }
+
+    /// Transform a plane applying rotation, scale, and position.
     pub const fn transform_plane(&self, plane: &Plane3D) -> Plane3D {
         let vector = self.transform_normal(&plane.vector);
         Plane3D {
@@ -674,13 +804,18 @@ impl Matrix4x3 {
             offset: self.scale * plane.offset + self.position.dot(&vector)
         }
     }
+
+    /// Transform the vector, applying scale and rotation.
     pub fn transform_vector(&self, vector: &Vector3D) -> Vector3D {
         let point_scaled = *vector * self.scale;
         self.rotation.transform_vector(&point_scaled)
     }
+
+    /// Transform the point, applying scale, rotation, and position.
     pub fn transform_point(&self, point: &Vector3D) -> Vector3D {
         self.transform_vector(point) + self.position
     }
+    /// Instantiate a matrix from a point and rotation.
     pub const fn from_point_and_quaternion(point: Vector3D, quaternion: Quaternion) -> Self {
         Self {
             position: point,

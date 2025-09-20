@@ -1,8 +1,10 @@
-/// Provides operations for rectangles.
+//! Home of the [`Rectangle`] type.
 
+/// Represents a 2D rectangle.
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Copy, Clone, Debug, PartialEq, Default)]
 #[repr(C)]
+#[expect(missing_docs)]
 pub struct Rectangle {
     pub top: i16,
     pub left: i16,
