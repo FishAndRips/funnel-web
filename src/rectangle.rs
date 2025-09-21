@@ -24,6 +24,7 @@ impl Rectangle {
     /// }
     /// ```
     #[inline]
+    #[must_use] 
     pub const fn from_width_and_height(width: i16, height: i16) -> Self {
         Rectangle {
             top: 0,
@@ -35,18 +36,21 @@ impl Rectangle {
 
     /// Get the width of the rectangle.
     #[inline]
+    #[must_use] 
     pub const fn width(self) -> u16 {
         (self.right as i32).wrapping_sub(self.left as i32) as u16
     }
 
     /// Get the height of the rectangle.
     #[inline]
+    #[must_use] 
     pub const fn height(self) -> u16 {
         (self.bottom as i32).wrapping_sub(self.top as i32) as u16
     }
 
     /// Center a rectangle inside a rectangle.
     #[inline]
+    #[must_use] 
     pub const fn centered_inside(self, what: Rectangle) -> Self {
         let left_offset = ((what.width() / 2) as i32) - ((self.width() / 2) as i32);
         let top_offset = ((what.height() / 2) as i32) - ((self.height() / 2) as i32);
@@ -64,6 +68,7 @@ impl Rectangle {
     ///
     /// Panics if height or width are 0.
     #[inline]
+    #[must_use] 
     pub const fn get_aspect_ratio(self) -> f32 {
         let width = self.width();
         let height = self.height();

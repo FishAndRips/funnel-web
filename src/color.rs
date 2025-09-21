@@ -18,6 +18,7 @@ impl AsRef<ColorARGB> for ColorARGB {
 }
 impl ColorARGB {
     /// Instantiates a color with all channels set to 0.0 (i.e. transparent [`ColorRGB::BLACK`]).
+    #[must_use] 
     pub const fn new() -> Self {
         ColorARGB {
             a: 0.0,
@@ -26,6 +27,7 @@ impl ColorARGB {
     }
 
     /// Returns `true` the color is valid (i.e. all channels are between 0 and 1, inclusive).
+    #[must_use] 
     pub const fn is_valid(&self) -> bool {
         self.a >= 0.0 && self.a <= 1.0 && self.color.is_valid()
     }
@@ -35,6 +37,7 @@ impl ColorARGB {
     /// # Panics
     ///
     /// Panics if `!self.is_valid()`.
+    #[must_use] 
     pub const fn to_pixel32(&self) -> Pixel32 {
         assert!(self.is_valid());
 
@@ -46,6 +49,7 @@ impl ColorARGB {
     }
 
     /// Clamps all values to between 0 and 1 (inclusive).
+    #[must_use] 
     pub const fn clamped(self) -> ColorARGB {
         ColorARGB {
             a: self.a.clamp(0.0, 1.0),
@@ -87,11 +91,13 @@ impl ColorRGB {
     pub const BLACK: ColorRGB = ColorRGB { r: 0.0, g: 0.0, b: 0.0 };
 
     /// Instantiate a color with all channels set to 0 (i.e. [`ColorRGB::BLACK`]).
+    #[must_use] 
     pub const fn new() -> Self {
         Self::BLACK
     }
 
     /// Returns `true` if the color is valid.
+    #[must_use] 
     pub const fn is_valid(&self) -> bool {
         self.r >= 0.0 && self.r <= 1.0
             && self.g >= 0.0 && self.g <= 1.0
@@ -99,11 +105,13 @@ impl ColorRGB {
     }
 
     /// Converts the color to a [`ColorARGB`] with alpha set to 1 (fully opaque).
+    #[must_use] 
     pub const fn as_colorargb(self) -> ColorARGB {
         ColorARGB { a: 1.0, color: self }
     }
 
     /// Clamps all values to between 0 and 1 (inclusive).
+    #[must_use] 
     pub const fn clamped(self) -> ColorRGB {
         ColorRGB { r: self.r.clamp(0.0, 1.0), g: self.g.clamp(0.0, 1.0), b: self.b.clamp(0.0, 1.0) }
     }

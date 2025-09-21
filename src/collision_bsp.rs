@@ -252,6 +252,7 @@ impl CollisionBSP3DNodeIndex {
     /// Split the index into a tuple.
     ///
     /// Returns `None` if this is a null index.
+    #[must_use] 
     pub const fn as_tuple(self) -> Option<(CollisionBSP3DNodeIndexType, usize)> {
         if self.0 == 0xFFFFFFFF {
             return None
@@ -288,6 +289,7 @@ pub enum CollisionBSP3DNodeIndexType {
 pub struct CollisionBSP2DNodeIndex(pub u32);
 impl CollisionBSP2DNodeIndex {
     /// Split the index into a tuple.
+    #[must_use] 
     pub const fn as_tuple(self) -> (CollisionBSP2DNodeIndexType, usize) {
         let index = self.0 & 0x7FFFFFFF;
         let index_type = if index == self.0 {

@@ -19,6 +19,7 @@ pub struct ASCIIString<const LEN: usize>([u8; LEN]);
 impl<const LEN: usize> ASCIIString<LEN> {
     /// Instantiate an empty ASCIIString.
     #[inline(always)]
+    #[must_use] 
     pub const fn new() -> Self {
         assert!(LEN > 0, "LEN must be nonzero");
 
@@ -35,6 +36,7 @@ impl<const LEN: usize> ASCIIString<LEN> {
     /// # Panics
     ///
     /// Panics if `LEN == 0`
+    #[must_use] 
     pub const fn from_bytes(mut bytes: [u8; LEN]) -> Option<Self> {
         assert!(LEN > 0, "LEN must be nonzero");
 
@@ -75,6 +77,7 @@ impl<const LEN: usize> ASCIIString<LEN> {
     /// # Panics
     ///
     /// Panics if `LEN == 0`
+    #[must_use] 
     pub const fn from_str(str: &str) -> Option<Self> {
         assert!(LEN > 0, "LEN must be nonzero");
 
@@ -96,17 +99,20 @@ impl<const LEN: usize> ASCIIString<LEN> {
 
     /// Get the full bytes buffer.
     #[inline(always)]
+    #[must_use] 
     pub const fn bytes(&self) -> &[u8; LEN] {
         &self.0
     }
 
     /// Get the length of the string.
+    #[must_use] 
     pub const fn string_len(&self) -> usize {
         self.as_cstr().to_bytes().len()
     }
 
     /// Get the string data as a string.
     #[inline(always)]
+    #[must_use] 
     pub const fn as_str(&self) -> &str {
         let str_bytes = self.as_cstr().to_bytes();
 
@@ -118,6 +124,7 @@ impl<const LEN: usize> ASCIIString<LEN> {
 
     /// Get the string data as a CStr.
     #[inline(always)]
+    #[must_use] 
     pub const fn as_cstr(&self) -> &CStr {
         // SAFETY: All constructors ensure that this is a null-terminated C string.
         unsafe {

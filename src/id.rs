@@ -24,6 +24,7 @@ impl<const SALT: u16> Default for ID<SALT> {
 impl<const SALT: u16> ID<SALT> {
     /// Instantiate a null ID.
     #[inline(always)]
+    #[must_use] 
     pub const fn new() -> Self {
         Self(NULL_ID)
     }
@@ -32,6 +33,7 @@ impl<const SALT: u16> ID<SALT> {
     ///
     /// A null index will result in a null ID.
     #[inline(always)]
+    #[must_use] 
     pub const fn from_index(index: Index) -> Self {
         match index.index() {
             None => Self(NULL_ID),
@@ -43,6 +45,7 @@ impl<const SALT: u16> ID<SALT> {
     ///
     /// Returns `None` if `index` is out-of-bounds for an id.
     #[inline(always)]
+    #[must_use] 
     pub const fn from_usize(index: usize) -> Option<Self> {
         if index > u16::MAX as usize {
             return None
@@ -54,6 +57,7 @@ impl<const SALT: u16> ID<SALT> {
     ///
     /// Returns `None` if `id` has the wrong salt.
     #[inline(always)]
+    #[must_use] 
     pub const fn from_u32(id: u32) -> Option<Self> {
         // If null or zeroed out, it's null.
         if id == 0 || id == NULL_ID {
@@ -72,18 +76,21 @@ impl<const SALT: u16> ID<SALT> {
 
     /// Returns the binary representation of the ID.
     #[inline(always)]
+    #[must_use] 
     pub const fn as_u32(self) -> u32 {
         self.0
     }
 
     /// Returns true if null.
     #[inline(always)]
+    #[must_use] 
     pub const fn is_null(self) -> bool {
         self.0 == NULL_ID
     }
 
     /// Returns the ID as a [`usize`] index.
     #[inline(always)]
+    #[must_use] 
     pub const fn index(self) -> Option<usize> {
         match self {
             Self(NULL_ID) => None,
@@ -116,6 +123,7 @@ pub struct Index(pub u16);
 impl Index {
     /// Create a null index.
     #[inline(always)]
+    #[must_use] 
     pub const fn new() -> Self {
         Self(0xFFFF)
     }
@@ -125,6 +133,7 @@ impl Index {
     /// Returns `None` if `index` is greater than or equal to [`u16::MAX`]. This is because 65535 is
     /// treated as null, and anything higher is too high to be addressable with a 16-bit integer.
     #[inline(always)]
+    #[must_use] 
     pub const fn from_usize(index: usize) -> Option<Self> {
         if index >= u16::MAX as usize {
             return None
@@ -134,12 +143,14 @@ impl Index {
 
     /// Returns true if null.
     #[inline(always)]
+    #[must_use] 
     pub const fn is_null(self) -> bool {
         self.0 == u16::MAX
     }
 
     /// Returns the value as a [`usize`] index.
     #[inline(always)]
+    #[must_use] 
     pub const fn index(self) -> Option<usize> {
         if self.is_null() {
             None
