@@ -40,11 +40,6 @@ impl<const LEN: usize> ASCIIString<LEN> {
     pub const fn from_bytes(mut bytes: [u8; LEN]) -> Option<Self> {
         assert!(LEN > 0, "LEN must be nonzero");
 
-        // Must be null terminated
-        if bytes[LEN - 1] != 0 {
-            return None
-        }
-
         let mut q = 0usize;
         while q < LEN {
             let byte = bytes[q];
@@ -56,7 +51,7 @@ impl<const LEN: usize> ASCIIString<LEN> {
                     bytes[q] = 0;
                     q += 1;
                 }
-                break
+                return Some(Self(bytes))
             }
 
             // control characters are banned
@@ -67,7 +62,7 @@ impl<const LEN: usize> ASCIIString<LEN> {
             q += 1;
         }
 
-        Some(Self(bytes))
+        None
     }
 
     /// Instantiate an empty ASCIIString.
@@ -240,11 +235,11 @@ mod test {
     #[test]
     fn from_bytes() {
         // all bytes after the first null byte get zeroed out
-        let empty_string = String8::from_bytes([0x00, b'b', b'c', b'd', 0x00, b'f', 0x00, 0x00]).unwrap();
+        let empty_string = String8::from_bytes([0x00, b'b', b'c', b'd', 0x00, b'f', 0x00, b'h']).unwrap();
         assert_eq!(empty_string, "", "should be empty string");
         assert_eq!(empty_string.bytes(), &[0u8; 8], "should be zeroed out");
 
-        let abcd = String8::from_bytes([b'a', b'b', b'c', b'd', 0x00, b'f', 0x00, 0x00]).unwrap();
+        let abcd = String8::from_bytes([b'a', b'b', b'c', b'd', 0x00, b'f', 0x00, b'h']).unwrap();
         assert_eq!(abcd, "abcd", "should be abcd");
         assert_eq!(abcd.bytes(), &[b'a', b'b', b'c', b'd', 0x00, 0x00, 0x00, 0x00], "should be zeroed out");
 
