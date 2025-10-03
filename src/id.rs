@@ -6,8 +6,8 @@ use core::cmp::Ordering;
 ///
 /// Can address up to 65536 items.
 ///
-/// `SALT` allows the type of ID to be compared (besides null IDs). This is typically the first two
-/// ASCII letters of a table's name read in little endian.
+/// `SALT` determines the upper 16 bits of the ID. This is typically the first two ASCII letters of
+/// a table's name read in little endian.
 ///
 /// `u32::MAX` ([`NULL_ID`]) is a null ID for any salt type.
 #[derive(Copy, Clone, PartialEq, Debug, Eq)]
@@ -36,10 +36,10 @@ impl<const SALT: u16> ID<SALT> {
     /// A null index will result in a null ID.
     #[inline(always)]
     #[must_use] 
-    pub const fn from_index(index: Index) -> Self {
+    pub const fn from_index(index: Index, created_count: u16) -> Self {
         match index.index() {
             None => Self(NULL_ID),
-            Some(index) => Self::id_from_index_value(index as u16)
+            Some(index) => Self::id_from_index_value(index as u16, created_count)
         }
     }
 
@@ -48,32 +48,18 @@ impl<const SALT: u16> ID<SALT> {
     /// Returns `None` if `index` is out-of-bounds for an id.
     #[inline(always)]
     #[must_use] 
-    pub const fn from_usize(index: usize) -> Option<Self> {
+    pub const fn from_usize(index: usize, created_count: u16) -> Option<Self> {
         if index > u16::MAX as usize {
             return None
         }
-        Some(Self::id_from_index_value(index as u16))
+        Some(Self::id_from_index_value(index as u16, created_count))
     }
 
     /// Create an ID from a [`u32`].
-    ///
-    /// Returns `None` if `id` has the wrong salt.
     #[inline(always)]
     #[must_use] 
-    pub const fn from_u32(id: u32) -> Option<Self> {
-        // If null or zeroed out, it's null.
-        if id == 0 || id == NULL_ID {
-            return Some(Self(NULL_ID))
-        }
-
-        // If the salt is wrong, no.
-        let index = Self::id_from_index_value(id as u16);
-        if index.as_u32() == id {
-            Some(index)
-        }
-        else {
-            None
-        }
+    pub const fn from_u32(id: u32) -> Self {
+        Self(id)
     }
 
     /// Returns the binary representation of the ID.
@@ -100,10 +86,28 @@ impl<const SALT: u16> ID<SALT> {
         }
     }
 
+    /// Get the creation index of the ID.
+    ///
+    /// This will wrap around [`u16::MAX`] once that many objects have been created.
     #[inline(always)]
-    const fn id_from_index_value(value: u16) -> Self {
-        let salt = (SALT ^ value) | 0x8000;
+    pub const fn creation_index(&self) -> Option<u16> {
+        if self.is_null() {
+            None
+        }
+        else {
+            Some(((self.0 >> 16) as u16).wrapping_sub(Self::base_identifier()))
+        }
+    }
+
+    #[inline(always)]
+    const fn id_from_index_value(value: u16, created_count: u16) -> Self {
+        let salt = Self::base_identifier().wrapping_add(created_count);
         Self((salt as u32) << 16 | (value as u32))
+    }
+
+    #[inline(always)]
+    const fn base_identifier() -> u16 {
+        SALT | 0x8000
     }
 }
 
@@ -183,7 +187,7 @@ impl Index {
 
     /// Returns the value as a [`usize`] index.
     #[inline(always)]
-    #[must_use] 
+    #[must_use]
     pub const fn index(self) -> Option<usize> {
         if self.is_null() {
             None
@@ -206,15 +210,16 @@ mod test {
 
     #[test]
     fn expected_tag_id_matches() {
-        assert_eq!(TagID::from_usize(0).unwrap().as_u32(), 0xE1740000);
-        assert_eq!(TagID::from_usize(1).unwrap().as_u32(), 0xE1750001);
-        assert_eq!(TagID::from_usize(0x8000).unwrap().as_u32(), 0xE1748000);
-        assert_eq!(TagID::from_usize(0x8001).unwrap().as_u32(), 0xE1758001);
-        assert_eq!(TagID::from_u32(0xE1750001).unwrap().as_u32(), 0xE1750001);
+        assert_eq!(TagID::from_usize(0, 0).unwrap().as_u32(), 0xE1740000);
+        assert_eq!(TagID::from_usize(1, 1).unwrap().as_u32(), 0xE1750001);
+        assert_eq!(TagID::from_usize(1, 2).unwrap().as_u32(), 0xE1760001);
+        assert_eq!(TagID::from_usize(0x8000, 0x8000).unwrap().as_u32(), 0x61748000);
+        assert_eq!(TagID::from_usize(0x8001, 0x8001).unwrap().as_u32(), 0x61758001);
+        assert_eq!(TagID::from_u32(0xE1750001).as_u32(), 0xE1750001);
         assert_eq!(TagID::new().as_u32(), 0xFFFFFFFF);
-        assert_eq!(TagID::from_index(Index::from_usize(1).unwrap()).as_u32(), 0xE1750001);
+        assert_eq!(TagID::from_index(Index::from_usize(1).unwrap(), 1).as_u32(), 0xE1750001);
 
-        assert!(TagID::from_u32(0xFFFFFFFF).unwrap().is_null());
-        assert!(TagID::from_index(Index::new()).is_null());
+        assert!(TagID::from_u32(0xFFFFFFFF).is_null());
+        assert!(TagID::from_index(Index::new(), 4).is_null());
     }
 }
