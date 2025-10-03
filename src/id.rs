@@ -1,5 +1,7 @@
 //! ID and index primitives.
 
+use core::cmp::Ordering;
+
 /// ID primitive
 ///
 /// Can address up to 65536 items.
@@ -8,7 +10,7 @@
 /// ASCII letters of a table's name read in little endian.
 ///
 /// `u32::MAX` ([`NULL_ID`]) is a null ID for any salt type.
-#[derive(Copy, Clone, PartialEq, Debug)]
+#[derive(Copy, Clone, PartialEq, Debug, Eq)]
 #[repr(transparent)]
 pub struct ID<const SALT: u16>(u32);
 
@@ -105,6 +107,37 @@ impl<const SALT: u16> ID<SALT> {
     }
 }
 
+fn cmp_ids<const SALT: u16>(id_a: ID<SALT>, id_b: ID<SALT>) -> Ordering {
+    if id_a.0 == id_b.0 {
+        return Ordering::Equal
+    }
+
+    let Some(self_index) = id_a.index() else {
+        return Ordering::Less
+    };
+
+    let Some(other_index) = id_b.index() else {
+        return Ordering::Less
+    };
+
+    match self_index.cmp(&other_index) {
+        Ordering::Equal => id_a.0.cmp(&id_b.0),
+        other => other
+    }
+}
+
+impl<const SALT: u16> PartialOrd for ID<SALT> {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(cmp_ids(*self, *other))
+    }
+}
+
+impl<const SALT: u16> Ord for ID<SALT> {
+    fn cmp(&self, other: &Self) -> Ordering {
+        cmp_ids(*self, *other)
+    }
+}
+
 /// Represents a tag ID.
 pub type TagID = ID<0x6174>;
 
@@ -116,7 +149,7 @@ pub type ScriptNodeID = ID<0x6373>;
 /// Can address up to 65535 elements.
 ///
 /// [`u16::MAX`] is treated as null.
-#[derive(Copy, Clone, PartialEq, Debug)]
+#[derive(Copy, Clone, PartialEq, Debug, Ord, PartialOrd, Eq)]
 #[repr(transparent)]
 pub struct Index(pub u16);
 
