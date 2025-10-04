@@ -90,6 +90,7 @@ impl<const SALT: u16> ID<SALT> {
     ///
     /// This will wrap around [`u16::MAX`] once that many objects have been created.
     #[inline(always)]
+    #[must_use]
     pub const fn creation_index(&self) -> Option<u16> {
         if self.is_null() {
             None
@@ -111,34 +112,30 @@ impl<const SALT: u16> ID<SALT> {
     }
 }
 
-fn cmp_ids<const SALT: u16>(id_a: ID<SALT>, id_b: ID<SALT>) -> Ordering {
-    if id_a.0 == id_b.0 {
-        return Ordering::Equal
-    }
-
-    let Some(self_index) = id_a.index() else {
-        return Ordering::Less
-    };
-
-    let Some(other_index) = id_b.index() else {
-        return Ordering::Less
-    };
-
-    match self_index.cmp(&other_index) {
-        Ordering::Equal => id_a.0.cmp(&id_b.0),
-        other => other
-    }
-}
-
 impl<const SALT: u16> PartialOrd for ID<SALT> {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(cmp_ids(*self, *other))
+        Some(self.cmp(other))
     }
 }
 
 impl<const SALT: u16> Ord for ID<SALT> {
     fn cmp(&self, other: &Self) -> Ordering {
-        cmp_ids(*self, *other)
+        if self.0 == other.0 {
+            return Ordering::Equal
+        }
+
+        let Some(self_index) = self.index() else {
+            return Ordering::Less
+        };
+
+        let Some(other_index) = other.index() else {
+            return Ordering::Less
+        };
+
+        match self_index.cmp(&other_index) {
+            Ordering::Equal => self.creation_index().cmp(&other.creation_index()),
+            other => other
+        }
     }
 }
 

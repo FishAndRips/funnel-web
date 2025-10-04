@@ -17,3 +17,4 @@ pub mod vector;
 pub mod id;
 pub mod string;
 pub mod crc;
+pub mod constants;

@@ -4,9 +4,6 @@ use core::fmt::{Debug, Display, Formatter};
 use core::ops::{Add, Mul, Neg, Sub};
 use crate::float::FloatOps;
 
-/// Minimum allowed magnitude to try to normalize floats, avoiding division by zero (or a really low number).
-pub const MIN_MAGNITUDE: f32 = 0.0001;
-
 /// A matrix with just the forward and up components.
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Copy, Clone, Debug, PartialEq, Default)]
@@ -429,7 +426,7 @@ impl Vector2D {
     #[must_use] 
     pub fn normalized(self) -> Option<Self> {
         let magnitude = self.magnitude();
-        if magnitude < MIN_MAGNITUDE {
+        if magnitude.fw_is_close_to(0.0) {
             None
         }
         else {
@@ -552,7 +549,7 @@ impl Vector3D {
     #[must_use] 
     pub fn normalized(self) -> Option<Self> {
         let magnitude = self.magnitude();
-        if magnitude < MIN_MAGNITUDE {
+        if magnitude.fw_is_close_to(0.0) {
             None
         }
         else {

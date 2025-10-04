@@ -20,25 +20,31 @@ pub trait FloatOps: Copy + Copy {
     const FW_QUARTER_PI: Self;
 
     /// Calculate the square root of a float.
+    #[must_use]
     fn fw_sqrt(self) -> Self;
 
     /// Calculate the inverse square root of a float.
     ///
     /// That is, 1.0 / x.sqrt()
+    #[must_use]
     fn fw_inverse_sqrt(self) -> Self;
 
     /// Calculate the float to the integer power.
+    #[must_use]
     fn fw_powi(self, exponent: i32) -> Self;
 
     /// Calculate the float to the float power.
+    #[must_use]
     fn fw_powf(self, exponent: Self) -> Self;
 
     /// Calculate the absolute value of the float.
+    #[must_use]
     fn fw_fabs(self) -> Self;
 
     /// Calculate the sine of the float.
     ///
     /// The float is treated as being in radians.
+    #[must_use]
     fn fw_sin(self) -> Self;
 
     /// Calculate the inverse sine (arcsine) of the float.
@@ -49,35 +55,50 @@ pub trait FloatOps: Copy + Copy {
     /// Calculate the cosine of the float.
     ///
     /// The float is treated as being in radians.
+    #[must_use]
     fn fw_cos(self) -> Self;
 
     /// Calculate the inverse cosine (arccosine) of the float.
     ///
     /// The float is treated as being in radians.
+    #[must_use]
     fn fw_acos(self) -> Self;
 
     /// Calculate the tangent of the float.
     ///
     /// The float is treated as being in radians.
+    #[must_use]
     fn fw_tan(self) -> Self;
 
     /// Calculate the inverse tangent (arctangent) of the float.
     ///
     /// The float is treated as being in radians.
+    #[must_use]
     fn fw_atan(self) -> Self;
 
     /// Round the float.
     ///
     /// If the float is evenly between two values (i.e. X.5), then round to the nearest even number.
+    #[must_use]
     fn fw_round_ties_even_to_int(self) -> i32;
 
     /// Round the float towards zero.
     ///
     /// This is like using floor() for a positive value and ceil() for a negative number.
+    #[must_use]
     fn fw_round_towards_zero_to_int(self) -> i32;
 
     /// Floor the float.
+    #[must_use]
     fn fw_floor_to_int(self) -> i32;
+
+    /// Return true if the given value is close to another value.
+    #[must_use]
+    fn fw_is_close_to(self, to: Self) -> bool;
+
+    /// Return true if the given value is non-NaN and non-infinite.
+    #[must_use]
+    fn fw_is_finite(self) -> bool;
 }
 
 impl FloatOps for f32 {
@@ -148,6 +169,14 @@ impl FloatOps for f32 {
                 Ordering::Less => rounded - 1
             }
         }
+    }
+    #[inline]
+    fn fw_is_close_to(self, to: Self) -> bool {
+        (self - to).abs() < 0.0001
+    }
+    #[inline]
+    fn fw_is_finite(self) -> bool {
+        self.is_finite()
     }
 }
 
