@@ -99,6 +99,12 @@ pub trait FloatOps: Copy + Copy {
     /// Return true if the given value is non-NaN and non-infinite.
     #[must_use]
     fn fw_is_finite(self) -> bool;
+
+    /// Return true if the given value close to 0.0.
+    ///
+    /// This is a convenience function for `self.fw_is_close_to(0.0)`
+    #[must_use]
+    fn fw_is_close_to_zero(self) -> bool;
 }
 
 impl FloatOps for f32 {
@@ -177,6 +183,10 @@ impl FloatOps for f32 {
     #[inline]
     fn fw_is_finite(self) -> bool {
         self.is_finite()
+    }
+    #[inline]
+    fn fw_is_close_to_zero(self) -> bool {
+        self.abs() < 0.0001
     }
 }
 
