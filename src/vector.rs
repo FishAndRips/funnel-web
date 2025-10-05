@@ -1,7 +1,7 @@
 //! Defines vectors and vector math.
 
 use core::fmt::{Debug, Display, Formatter};
-use core::ops::{Add, Mul, Neg, Sub};
+use core::ops::{Add, Mul, MulAssign, Neg, Sub};
 use crate::float::FloatOps;
 
 /// A matrix with just the forward and up components.
@@ -318,6 +318,12 @@ impl Mul<f32> for Quaternion {
     }
 }
 
+impl MulAssign<f32> for Quaternion {
+    fn mul_assign(&mut self, value: f32) {
+        *self = *self * value;
+    }
+}
+
 impl Add<Quaternion> for Quaternion {
     type Output = Quaternion;
     fn add(self, rhs: Quaternion) -> Self::Output {
@@ -440,6 +446,19 @@ impl Vector2D {
     #[must_use] 
     pub const fn cross_product(self, other: Self) -> f32 {
         self.x * other.y - self.y * other.x
+    }
+}
+
+impl Mul<f32> for Vector2D {
+    type Output = Self;
+    fn mul(self, value: f32) -> Self {
+        self.scaled(value)
+    }
+}
+
+impl MulAssign<f32> for Vector2D {
+    fn mul_assign(&mut self, value: f32) {
+        *self = *self * value;
     }
 }
 
@@ -624,6 +643,12 @@ impl Mul<f32> for Vector3D {
 
     fn mul(self, value: f32) -> Self::Output {
         self.scaled(value)
+    }
+}
+
+impl MulAssign<f32> for Vector3D {
+    fn mul_assign(&mut self, value: f32) {
+        *self = *self * value;
     }
 }
 
