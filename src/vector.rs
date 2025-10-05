@@ -372,7 +372,14 @@ pub struct Vector2D {
 
 impl Vector2D {
     /// Vector with all components set to 0.
-    pub const ZEROED: Self = Vector2D { x: 0.0, y: 0.0 };
+    pub const ZEROED: Self = Vector2D::from_scalar(0.0);
+
+    /// Return a Vector2D with x and y set to `scalar`.
+    #[inline]
+    #[must_use]
+    pub const fn from_scalar(scalar: f32) -> Self {
+        Self { x: scalar, y: scalar }
+    }
 
     /// Return `true` if all components of the vector are valid.
     #[inline]
@@ -513,7 +520,14 @@ pub struct Vector3D {
 
 impl Vector3D {
     /// Vector with all components set to 0.
-    pub const ZEROED: Self = Vector3D { x: 0.0, y: 0.0, z: 0.0 };
+    pub const ZEROED: Self = Vector3D::from_scalar(0.0);
+
+    /// Return a Vector3D with x and y set to `scalar`.
+    #[inline]
+    #[must_use]
+    pub const fn from_scalar(scalar: f32) -> Self {
+        Self { x: scalar, y: scalar, z: scalar }
+    }
 
     /// Return `true` if all components of the vector are valid.
     #[inline]
