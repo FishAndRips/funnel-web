@@ -375,14 +375,14 @@ impl Vector2D {
     pub const ZEROED: Self = Vector2D { x: 0.0, y: 0.0 };
 
     /// Return `true` if all components of the vector are valid.
-    #[inline(always)]
+    #[inline]
     #[must_use] 
     pub const fn is_valid(self) -> bool {
         !self.x.is_nan() && !self.y.is_nan()
     }
 
     /// Return the dot product with another vector.
-    #[inline(always)]
+    #[inline]
     #[must_use] 
     pub const fn dot(self, other: &Self) -> f32 {
         self.x * other.x + self.y * other.y
@@ -391,7 +391,7 @@ impl Vector2D {
     /// Get the magnitude squared.
     ///
     /// This is cheaper than calling [`magnitude`](Self::magnitude).
-    #[inline(always)]
+    #[inline]
     #[must_use] 
     pub const fn magnitude_squared(self) -> f32 {
         self.dot(&self)
@@ -401,14 +401,14 @@ impl Vector2D {
     ///
     /// This is more expensive than calling [`magnitude_squared`](Self::magnitude_squared) due to
     /// having to square root the result.
-    #[inline(always)]
+    #[inline]
     #[must_use] 
     pub fn magnitude(self) -> f32 {
         self.dot(&self).fw_sqrt()
     }
 
     /// Multiply all components with `amount`.
-    #[inline(always)]
+    #[inline]
     #[must_use] 
     pub const fn scaled(self, amount: f32) -> Self {
         Self {
@@ -418,7 +418,7 @@ impl Vector2D {
     }
 
     /// Negate the signs of all components of this vector.
-    #[inline(always)]
+    #[inline]
     #[must_use] 
     pub const fn negated(self) -> Self {
         Self {
@@ -442,7 +442,7 @@ impl Vector2D {
     }
 
     /// Calculate the cross product with another vector (as 3D vectors) and return the Z coordinate.
-    #[inline(always)]
+    #[inline]
     #[must_use] 
     pub const fn cross_product(self, other: Self) -> f32 {
         self.x * other.y - self.y * other.x
@@ -516,7 +516,7 @@ impl Vector3D {
     pub const ZEROED: Self = Vector3D { x: 0.0, y: 0.0, z: 0.0 };
 
     /// Return `true` if all components of the vector are valid.
-    #[inline(always)]
+    #[inline]
     #[must_use] 
     pub const fn is_valid(self) -> bool {
         !self.x.is_nan() && !self.y.is_nan() && !self.z.is_nan()
@@ -578,7 +578,7 @@ impl Vector3D {
     }
 
     /// Negate the signs of all components of this vector.
-    #[inline(always)]
+    #[inline]
     #[must_use] 
     pub const fn negated(self) -> Self {
         Self {
@@ -589,7 +589,7 @@ impl Vector3D {
     }
 
     /// Calculate the cross product with another vector (as 3D vectors) and return the Z coordinate.
-    #[inline(always)]
+    #[inline]
     #[must_use] 
     pub const fn cross_product(self, other: Self) -> Self {
         Self {

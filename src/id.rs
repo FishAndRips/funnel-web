@@ -25,7 +25,7 @@ impl<const SALT: u16> Default for ID<SALT> {
 
 impl<const SALT: u16> ID<SALT> {
     /// Instantiate a null ID.
-    #[inline(always)]
+    #[inline]
     #[must_use] 
     pub const fn new() -> Self {
         Self(NULL_ID)
@@ -34,7 +34,7 @@ impl<const SALT: u16> ID<SALT> {
     /// Create an ID from an [`Index`].
     ///
     /// A null index will result in a null ID.
-    #[inline(always)]
+    #[inline]
     #[must_use] 
     pub const fn from_index(index: Index, created_count: u16) -> Self {
         match index.index() {
@@ -46,7 +46,7 @@ impl<const SALT: u16> ID<SALT> {
     /// Create an ID from a [`usize`].
     ///
     /// Returns `None` if `index` is out-of-bounds for an id.
-    #[inline(always)]
+    #[inline]
     #[must_use] 
     pub const fn from_usize(index: usize, created_count: u16) -> Option<Self> {
         if index > u16::MAX as usize {
@@ -56,28 +56,28 @@ impl<const SALT: u16> ID<SALT> {
     }
 
     /// Create an ID from a [`u32`].
-    #[inline(always)]
+    #[inline]
     #[must_use] 
     pub const fn from_u32(id: u32) -> Self {
         Self(id)
     }
 
     /// Returns the binary representation of the ID.
-    #[inline(always)]
+    #[inline]
     #[must_use] 
     pub const fn as_u32(self) -> u32 {
         self.0
     }
 
     /// Returns true if null.
-    #[inline(always)]
+    #[inline]
     #[must_use] 
     pub const fn is_null(self) -> bool {
         self.0 == NULL_ID
     }
 
     /// Returns the ID as a [`usize`] index.
-    #[inline(always)]
+    #[inline]
     #[must_use] 
     pub const fn index(self) -> Option<usize> {
         match self {
@@ -89,7 +89,7 @@ impl<const SALT: u16> ID<SALT> {
     /// Get the creation index of the ID.
     ///
     /// This will wrap around [`u16::MAX`] once that many objects have been created.
-    #[inline(always)]
+    #[inline]
     #[must_use]
     pub const fn creation_index(&self) -> Option<u16> {
         if self.is_null() {
@@ -100,13 +100,13 @@ impl<const SALT: u16> ID<SALT> {
         }
     }
 
-    #[inline(always)]
+    #[inline]
     const fn id_from_index_value(value: u16, created_count: u16) -> Self {
         let salt = Self::base_identifier().wrapping_add(created_count);
         Self((salt as u32) << 16 | (value as u32))
     }
 
-    #[inline(always)]
+    #[inline]
     const fn base_identifier() -> u16 {
         SALT | 0x8000
     }
@@ -156,7 +156,7 @@ pub struct Index(pub u16);
 
 impl Index {
     /// Create a null index.
-    #[inline(always)]
+    #[inline]
     #[must_use] 
     pub const fn new() -> Self {
         Self(0xFFFF)
@@ -166,7 +166,7 @@ impl Index {
     ///
     /// Returns `None` if `index` is greater than or equal to [`u16::MAX`]. This is because 65535 is
     /// treated as null, and anything higher is too high to be addressable with a 16-bit integer.
-    #[inline(always)]
+    #[inline]
     #[must_use] 
     pub const fn from_usize(index: usize) -> Option<Self> {
         if index >= u16::MAX as usize {
@@ -176,14 +176,14 @@ impl Index {
     }
 
     /// Returns true if null.
-    #[inline(always)]
+    #[inline]
     #[must_use] 
     pub const fn is_null(self) -> bool {
         self.0 == u16::MAX
     }
 
     /// Returns the value as a [`usize`] index.
-    #[inline(always)]
+    #[inline]
     #[must_use]
     pub const fn index(self) -> Option<usize> {
         if self.is_null() {
