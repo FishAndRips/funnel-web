@@ -604,12 +604,22 @@ impl Vector3D {
 
     /// Calculate the cross product with another vector (as 3D vectors) and return the Z coordinate.
     #[inline]
-    #[must_use] 
+    #[must_use]
     pub const fn cross_product(self, other: Self) -> Self {
         Self {
             x: self.y * other.z - self.z * other.y,
             y: self.z * other.x - self.x * other.z,
             z: self.x * other.y - self.y * other.x
+        }
+    }
+
+    /// Return the value represented as a [`Euler2D`].
+    #[inline]
+    #[must_use]
+    pub fn as_euler_angles(self) -> Euler2D {
+        Euler2D {
+            yaw: self.y.fw_atan2(self.x),
+            pitch: self.z.fw_atan2(Vector2D { x: self.x, y: self.y }.magnitude())
         }
     }
 }
@@ -690,6 +700,38 @@ pub struct Vector2DInt {
 pub struct Euler2D {
     pub yaw: f32,
     pub pitch: f32
+}
+
+impl Euler2D {
+    /// Convert the Euler2D into a 3D vector.
+    #[inline]
+    #[must_use]
+    pub fn as_vector(self) -> Vector3D {
+        let sine_pitch = self.pitch.fw_sin();
+        let cosine_pitch = self.pitch.fw_cos();
+        let sine_yaw = self.yaw.fw_sin();
+        let cosine_yaw = self.yaw.fw_cos();
+
+        Vector3D {
+            x: cosine_yaw * cosine_pitch,
+            y: sine_yaw * cosine_pitch,
+            z: sine_pitch
+        }
+    }
+}
+
+impl From<Euler2D> for Vector3D {
+    #[inline]
+    fn from(value: Euler2D) -> Self {
+        value.as_vector()
+    }
+}
+
+impl From<Vector3D> for Euler2D {
+    #[inline]
+    fn from(value: Vector3D) -> Self {
+        value.as_euler_angles()
+    }
 }
 
 /// Represents a rotation using an Euler angle.

@@ -76,6 +76,10 @@ pub trait FloatOps: Copy + Copy {
     #[must_use]
     fn fw_atan(self) -> Self;
 
+    /// Calculate the inverse tangent (arctangent) of `self/x`.
+    #[must_use]
+    fn fw_atan2(self, x: f32) -> Self;
+
     /// Round the float.
     ///
     /// If the float is evenly between two values (i.e. X.5), then round to the nearest even number.
@@ -144,6 +148,8 @@ impl FloatOps for f32 {
     fn fw_tan(self) -> Self { libm::tanf(self) }
     #[inline]
     fn fw_atan(self) -> Self { libm::atanf(self) }
+    #[inline]
+    fn fw_atan2(self, x: f32) -> Self { libm::atan2f(self, x) }
 
     fn fw_round_ties_even_to_int(self) -> i32 {
         let a = self.fw_floor_to_int();
