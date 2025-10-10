@@ -1,6 +1,7 @@
 //! Defines vectors and vector math.
 
 use core::fmt::{Debug, Display, Formatter};
+use core::mem::transmute;
 use core::ops::{Add, Mul, MulAssign, Neg, Sub};
 use crate::float::FloatOps;
 
@@ -117,6 +118,41 @@ impl Matrix3x3 {
             y: normal.x * self.forward.y + normal.y * self.left.y + normal.z * self.up.y,
             z: normal.x * self.forward.z + normal.y * self.left.z + normal.z * self.up.z,
         }
+    }
+
+    /// Return the matrix inverted.
+    #[must_use]
+    pub const fn inverted(self) -> Matrix3x3 {
+        let determinant =
+            self.forward.x * self.left.y * self.up.z +
+            self.forward.y * self.left.z * self.up.x +
+            self.forward.z * self.left.x * self.up.y -
+            self.forward.x * self.left.z * self.up.y -
+            self.forward.y * self.left.x * self.up.z -
+            self.forward.z * self.left.y * self.up.x;
+
+        let determinant_inverse = 1.0 / determinant;
+
+        // SAFETY: Can be safely represented as this
+        let array: [[f32; 3]; 3] = unsafe { transmute(self) };
+        let mut inverse = [[0.0f32; 3]; 3];
+
+        // Do this funky loop because const does not allow for loops yet
+        let mut i = 0;
+        while i < 3 {
+            let mut j = 0;
+            while j < 3 {
+                let ip = if i < 2 { i + 1 } else { 0 };
+                let im = if i > 0 { i - 1 } else { 2 };
+                let jp = if j < 2 { j + 1 } else { 0 };
+                let jm = if j > 0 { j - 1 } else { 2 };
+                inverse[j][i] = determinant_inverse * (array[ip][jp] * array[im][jm] - array[ip][jm] * array[im][jp]);
+                j += 1;
+            }
+            i += 1;
+        }
+
+        unsafe { transmute(inverse) }
     }
 }
 
