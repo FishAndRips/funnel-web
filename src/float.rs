@@ -10,6 +10,9 @@ use core::cmp::Ordering;
 /// 
 /// These are guaranteed to be accurate to the way Halo calculates its floats, at least on SSE.
 pub trait FloatOps: Copy + Copy {
+    /// Approximately equal to 2.0 times pi.
+    const FW_2PI: Self;
+
     /// Approximately equal to pi.
     const FW_PI: Self;
 
@@ -112,9 +115,10 @@ pub trait FloatOps: Copy + Copy {
 }
 
 impl FloatOps for f32 {
+    const FW_2PI: Self = core::f32::consts::TAU;
     const FW_PI: Self = core::f32::consts::PI;
-    const FW_HALF_PI: Self = core::f32::consts::PI / 2.0;
-    const FW_QUARTER_PI: Self = core::f32::consts::PI / 4.0;
+    const FW_HALF_PI: Self = core::f32::consts::FRAC_PI_2;
+    const FW_QUARTER_PI: Self = core::f32::consts::FRAC_PI_4;
 
     #[inline]
     fn fw_sqrt(self) -> Self {
