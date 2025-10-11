@@ -846,7 +846,8 @@ impl Angle {
     /// Compute an angle from the given degrees.
     #[must_use] 
     pub const fn from_degrees(deg: f32) -> Self {
-        Self::from_radians(deg.to_radians())
+        // Use a constant for multiplying to ensure accuracy/precision with tool.exe
+        Self::from_radians(deg * 0.01745329251994)
     }
 
     /// Compute an angle from the given radians.
@@ -860,7 +861,8 @@ impl Angle {
     /// Get the value as degrees.
     #[must_use] 
     pub const fn degrees(self) -> f32 {
-        self.0.to_degrees()
+        // Use a constant for multiplying to ensure accuracy/precision with tool.exe
+        self.0.to_degrees() * 57.29577951308
     }
 
     /// Get the value as radians.
