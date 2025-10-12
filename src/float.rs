@@ -107,11 +107,15 @@ pub trait FloatOps: Copy + Copy {
     #[must_use]
     fn fw_is_finite(self) -> bool;
 
-    /// Return true if the given value close to 0.0.
+    /// Return true if the given value is close to 0.0.
     ///
     /// This is a convenience function for `self.fw_is_close_to(0.0)`
     #[must_use]
     fn fw_is_close_to_zero(self) -> bool;
+
+    /// Return true if the given value is close to 0.0 or less.
+    #[must_use]
+    fn fw_is_close_to_zero_or_less(self) -> bool;
 }
 
 impl FloatOps for f32 {
@@ -197,6 +201,10 @@ impl FloatOps for f32 {
     #[inline]
     fn fw_is_close_to_zero(self) -> bool {
         self.abs() < 0.0001
+    }
+    #[inline]
+    fn fw_is_close_to_zero_or_less(self) -> bool {
+        self < 0.0001
     }
 }
 
