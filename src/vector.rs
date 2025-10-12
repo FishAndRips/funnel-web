@@ -1,5 +1,6 @@
 //! Defines vectors and vector math.
 
+use core::cmp::Ordering;
 use core::fmt::{Debug, Display, Formatter};
 use core::mem::transmute;
 use core::ops::{Add, Mul, MulAssign, Neg, Sub};
@@ -881,6 +882,12 @@ impl Display for Angle {
 impl Debug for Angle {
     fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         Display::fmt(self, f)
+    }
+}
+
+impl PartialOrd for Angle {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        self.0.partial_cmp(&other.0)
     }
 }
 
