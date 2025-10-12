@@ -31,7 +31,7 @@ pub const WORLD_UNIT_PER_METER: f32 = 1.0 / METERS_PER_WORLD_UNIT;
 
 /// Gravity in meters per second squared.
 ///
-/// 9.78 = approximately 0.997 G (~0.997x Earth's gravity at sea level)
+/// 9.78 = approximately 0.997 g (~0.997x Earth's gravity at sea level)
 pub const GRAVITY_METERS_PER_SECOND_SQUARED: f32 = 9.78;
 
 /// Gravity in world units per tick squared.
