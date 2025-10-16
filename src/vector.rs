@@ -491,6 +491,23 @@ impl Vector2D {
     pub const fn cross_product(self, other: Self) -> f32 {
         self.x * other.y - self.y * other.x
     }
+
+    /// Offset the point `offset` world units in `direction`.
+    #[inline]
+    #[must_use]
+    pub fn apply_offset(self, direction: Vector2D, offset: f32) -> Vector2D {
+        self + direction * offset
+    }
+}
+
+impl Add<Vector2D> for Vector2D {
+    type Output = Self;
+    fn add(self, value: Vector2D) -> Self {
+        Self {
+            x: self.x + value.x,
+            y: self.y + value.y
+        }
+    }
 }
 
 impl Mul<f32> for Vector2D {
@@ -658,6 +675,13 @@ impl Vector3D {
             yaw: self.y.fw_atan2(self.x),
             pitch: self.z.fw_atan2(Vector2D { x: self.x, y: self.y }.magnitude())
         }
+    }
+
+    /// Offset the point `offset` world units in `direction`.
+    #[inline]
+    #[must_use]
+    pub fn apply_offset(self, direction: Vector3D, offset: f32) -> Vector3D {
+        self + direction * offset
     }
 }
 
