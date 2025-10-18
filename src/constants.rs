@@ -107,3 +107,12 @@ pub const fn reverse_per_seconds_squared_to_per_ticks_squared(ticks_squared: f32
 
 /// Length of a detail_object_collection cell in world units.
 pub const DETAIL_OBJECT_WORLD_UNITS_PER_CELL: f32 = 8.0;
+
+/// Size of an Xbox ADPCM chunk.
+pub const XBOX_ADPCM_BLOCK_SIZE_BYTES: usize = 36;
+
+/// Number of samples in an Xbox ADPCM block.
+pub const XBOX_ADPCM_BLOCK_SAMPLE_COUNT: usize = 64;
+
+/// Size of a 16-bit PCM sample in bytes.
+pub const PCM_SAMPLE_SIZE_BYTES: usize = 2;
