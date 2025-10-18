@@ -848,6 +848,9 @@ impl Angle {
     /// The default vertical FoV in degrees (~55.41 degrees) for the game.
     pub const DEFAULT_VERTICAL_FOV: Angle = Angle::from_radians(0.96713803047123473857584761442933284839190937900591636936069359052097036749);
 
+    /// 0 degrees.
+    pub const _0_DEG: Angle = Angle::from_radians(0.0);
+
     /// 45 degrees.
     pub const _45_DEG: Angle = Angle::from_radians(f32::FW_QUARTER_PI);
 
