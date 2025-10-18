@@ -22,6 +22,16 @@ pub trait FloatOps: Copy + Copy {
     /// Approximately equal to 0.25 times pi.
     const FW_QUARTER_PI: Self;
 
+    /// Approximately equal to 1 degree in radians.
+    ///
+    /// Used for converting degrees to radians with the same bitwise accuracy as tool.exe
+    const FW_RADIANS_PER_DEGREE: Self;
+
+    /// Approximately equal to 1 radian in degrees.
+    ///
+    /// Used for converting radians to degrees with the same bitwise accuracy as tool.exe
+    const FW_DEGREES_PER_RADIAN: Self;
+
     /// Calculate the square root of a float.
     #[must_use]
     fn fw_sqrt(self) -> Self;
@@ -123,6 +133,8 @@ impl FloatOps for f32 {
     const FW_PI: Self = core::f32::consts::PI;
     const FW_HALF_PI: Self = core::f32::consts::FRAC_PI_2;
     const FW_QUARTER_PI: Self = core::f32::consts::FRAC_PI_4;
+    const FW_RADIANS_PER_DEGREE: Self = 0.01745329251994;
+    const FW_DEGREES_PER_RADIAN: Self = 57.29577951308;
 
     #[inline]
     fn fw_sqrt(self) -> Self {

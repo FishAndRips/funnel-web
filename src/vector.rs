@@ -41,7 +41,7 @@ impl Matrix3x3 {
     };
 
     /// Multiply two matrices.
-    #[must_use] 
+    #[must_use]
     pub const fn multiply(&self, by: &Self) -> Self {
         Matrix3x3 {
             forward: Vector3D {
@@ -63,13 +63,13 @@ impl Matrix3x3 {
     }
 
     /// Interpolate this matrix by another one by `by` amount.
-    #[must_use] 
+    #[must_use]
     pub fn interpolated(self, with: Matrix3x3, by: f32) -> Matrix3x3 {
         self.as_quaternion().interpolated(with.as_quaternion(), by).into()
     }
 
     /// Convert the matrix to a quaternion.
-    #[must_use] 
+    #[must_use]
     pub fn as_quaternion(&self) -> Quaternion {
         // http://www.euclideanspace.com/maths/geometry/rotations/conversions/matrixToQuaternion/index.htm
         let tr = self.forward.x + self.left.y + self.up.z;
@@ -112,7 +112,7 @@ impl Matrix3x3 {
     }
 
     /// Transform the vector.
-    #[must_use] 
+    #[must_use]
     pub const fn transform_vector(&self, normal: &Vector3D) -> Vector3D {
         Vector3D {
             x: normal.x * self.forward.x + normal.y * self.left.x + normal.z * self.up.x,
@@ -182,13 +182,13 @@ impl Quaternion {
     pub const IDENTITY: Self = Self { x: 0.0, y: 0.0, z: 0.0, w: 1.0 };
 
     /// Square length of the quaternion.
-    #[must_use] 
+    #[must_use]
     pub const fn square_length(self) -> f32 {
         self.dot(self)
     }
 
     /// Convert the quaternion to a matrix.
-    #[must_use] 
+    #[must_use]
     pub const fn as_matrix(self) -> Matrix3x3 {
         let square_length = self.square_length();
         if square_length.is_nan() || square_length == 0.0 {
@@ -231,7 +231,7 @@ impl Quaternion {
     }
 
     /// Normalize the quaternion.
-    #[must_use] 
+    #[must_use]
     pub fn normalized(self) -> Quaternion {
         let square_length = self.square_length();
         if square_length <= 0.0 {
@@ -251,7 +251,7 @@ impl Quaternion {
     ///
     /// This function is more accurate than [linear_interpolated_unnormalized](Self::linear_interpolated_unnormalized),
     /// but it is less performant.
-    #[must_use] 
+    #[must_use]
     pub fn interpolated(self, b: Quaternion, by: f32) -> Quaternion {
         // special thanks to MosesOfEgypt for the rotation interpolation stuff here
         let a = self.normalized();
@@ -290,7 +290,7 @@ impl Quaternion {
     ///
     /// This function returns a normalized vector. If one isn't necessary, use
     /// [linear_interpolated_unnormalized](Self::linear_interpolated_unnormalized).
-    #[must_use] 
+    #[must_use]
     pub fn linear_interpolated(self, with: Quaternion, by: f32) -> Quaternion {
         self.linear_interpolated_unnormalized(with, by).normalized()
     }
@@ -302,7 +302,7 @@ impl Quaternion {
     ///
     /// This function returns a (most likely) unnormalized vector. If one is necessary, use
     /// [linear_interpolated](Self::linear_interpolated).
-    #[must_use] 
+    #[must_use]
     pub fn linear_interpolated_unnormalized(self, with: Quaternion, by: f32) -> Quaternion {
         // linear interpolate; this is not very good, but this is how Halo originally does it
         let dot = self.dot(with);
@@ -420,14 +420,14 @@ impl Vector2D {
 
     /// Return `true` if all components of the vector are valid.
     #[inline]
-    #[must_use] 
+    #[must_use]
     pub const fn is_valid(self) -> bool {
         !self.x.is_nan() && !self.y.is_nan()
     }
 
     /// Return the dot product with another vector.
     #[inline]
-    #[must_use] 
+    #[must_use]
     pub const fn dot(self, other: &Self) -> f32 {
         self.x * other.x + self.y * other.y
     }
@@ -436,7 +436,7 @@ impl Vector2D {
     ///
     /// This is cheaper than calling [`magnitude`](Self::magnitude).
     #[inline]
-    #[must_use] 
+    #[must_use]
     pub const fn magnitude_squared(self) -> f32 {
         self.dot(&self)
     }
@@ -446,14 +446,14 @@ impl Vector2D {
     /// This is more expensive than calling [`magnitude_squared`](Self::magnitude_squared) due to
     /// having to square root the result.
     #[inline]
-    #[must_use] 
+    #[must_use]
     pub fn magnitude(self) -> f32 {
         self.dot(&self).fw_sqrt()
     }
 
     /// Multiply all components with `amount`.
     #[inline]
-    #[must_use] 
+    #[must_use]
     pub const fn scaled(self, amount: f32) -> Self {
         Self {
             x: self.x * amount,
@@ -463,7 +463,7 @@ impl Vector2D {
 
     /// Negate the signs of all components of this vector.
     #[inline]
-    #[must_use] 
+    #[must_use]
     pub const fn negated(self) -> Self {
         Self {
             x: -self.x,
@@ -473,7 +473,7 @@ impl Vector2D {
 
     /// Convert the vector to a unit vector, if possible.
     #[inline]
-    #[must_use] 
+    #[must_use]
     pub fn normalized(self) -> Option<Self> {
         let magnitude = self.magnitude();
         if magnitude.fw_is_close_to(0.0) {
@@ -487,7 +487,7 @@ impl Vector2D {
 
     /// Calculate the cross product with another vector (as 3D vectors) and return the Z coordinate.
     #[inline]
-    #[must_use] 
+    #[must_use]
     pub const fn cross_product(self, other: Self) -> f32 {
         self.x * other.y - self.y * other.x
     }
@@ -585,19 +585,19 @@ impl Vector3D {
 
     /// Return `true` if all components of the vector are valid.
     #[inline]
-    #[must_use] 
+    #[must_use]
     pub const fn is_valid(self) -> bool {
         !self.x.is_nan() && !self.y.is_nan() && !self.z.is_nan()
     }
 
     /// Return the dot product with another vector.
-    #[must_use] 
+    #[must_use]
     pub const fn dot(self, other: &Vector3D) -> f32 {
         self.x * other.x + self.y * other.y + self.z * other.z
     }
 
     /// Multiply all components with `amount`.
-    #[must_use] 
+    #[must_use]
     pub const fn scaled(self, by: f32) -> Self {
         Self {
             x: self.x * by,
@@ -609,7 +609,7 @@ impl Vector3D {
     /// Get the magnitude squared.
     ///
     /// This is cheaper than calling [`magnitude`](Self::magnitude).
-    #[must_use] 
+    #[must_use]
     pub const fn magnitude_squared(self) -> f32 {
         self.dot(&self)
     }
@@ -618,13 +618,13 @@ impl Vector3D {
     ///
     /// This is more expensive than calling [`magnitude_squared`](Self::magnitude_squared) due to
     /// having to square root the result.
-    #[must_use] 
+    #[must_use]
     pub fn magnitude(self) -> f32 {
         self.magnitude_squared().fw_sqrt()
     }
 
     /// Interpolate this vector with another one by `by` amount.
-    #[must_use] 
+    #[must_use]
     pub fn linear_interpolated(self, with: Vector3D, by: f32) -> Vector3D {
         let by = by.clamp(0.0, 1.0);
         let a = by;
@@ -633,7 +633,7 @@ impl Vector3D {
     }
 
     /// Convert the vector to a unit vector, if possible.
-    #[must_use] 
+    #[must_use]
     pub fn normalized(self) -> Option<Self> {
         let magnitude = self.magnitude();
         if magnitude.fw_is_close_to(0.0) {
@@ -647,7 +647,7 @@ impl Vector3D {
 
     /// Negate the signs of all components of this vector.
     #[inline]
-    #[must_use] 
+    #[must_use]
     pub const fn negated(self) -> Self {
         Self {
             x: -self.x,
@@ -827,7 +827,7 @@ pub struct Plane3D {
 }
 impl Plane3D {
     /// Get the distance `point` is from this plane.
-    #[must_use] 
+    #[must_use]
     pub const fn distance_to_point(self, point: Vector3D) -> f32 {
         point.dot(&self.vector) - self.offset
     }
@@ -848,14 +848,26 @@ impl Angle {
     /// The default vertical FoV in degrees (~55.41 degrees) for the game.
     pub const DEFAULT_VERTICAL_FOV: Angle = Angle::from_radians(0.96713803047123473857584761442933284839190937900591636936069359052097036749);
 
+    /// 45 degrees.
+    pub const _45_DEG: Angle = Angle::from_radians(f32::FW_QUARTER_PI);
+
+    /// 90 degrees.
+    pub const _90_DEG: Angle = Angle::from_radians(f32::FW_HALF_PI);
+
+    /// 180 degrees.
+    pub const _180_DEG: Angle = Angle::from_radians(f32::FW_PI);
+
+    /// 360 degrees.
+    pub const _360_DEG: Angle = Angle::from_radians(f32::FW_2PI);
+
     /// Calculate a vertical FoV from a horizontal FoV.
-    #[must_use] 
+    #[must_use]
     pub fn calculate_vertical_fov(self, aspect_ratio: f32) -> Angle {
         Self::from_radians(2.0 * ((self.radians() / 2.0).fw_tan() / aspect_ratio).fw_atan())
     }
 
     /// Calculate a horizontal FoV from a vertical FoV.
-    #[must_use] 
+    #[must_use]
     pub fn calculate_horizontal_fov(self, aspect_ratio: f32) -> Angle {
         Self::from_radians(2.0 * ((self.radians() / 2.0).fw_tan() * aspect_ratio).fw_atan())
     }
@@ -863,37 +875,36 @@ impl Angle {
     /// Calculate a horizontal FoV from one aspect ratio to another.
     ///
     /// The resulting FoV will have the same vertical FoV.
-    #[must_use] 
+    #[must_use]
     pub fn convert_horizontal_fov(self, from_aspect_ratio: f32, to_aspect_ratio: f32) -> Angle {
         self.calculate_vertical_fov(from_aspect_ratio).calculate_horizontal_fov(to_aspect_ratio)
     }
 
     /// Compute an angle from the given degrees.
-    #[must_use] 
+    #[must_use]
     pub const fn from_degrees(deg: f32) -> Self {
-        // Use a constant for multiplying to ensure accuracy/precision with tool.exe
-        Self::from_radians(deg * 0.01745329251994)
+        Self::from_radians(deg * f32::FW_RADIANS_PER_DEGREE)
     }
 
     /// Compute an angle from the given radians.
     ///
     /// This is provided for completion, as this is simply the same thing as using `Self(rad)`.
-    #[must_use] 
+    #[must_use]
     pub const fn from_radians(rad: f32) -> Self {
         Self(rad)
     }
 
     /// Get the value as degrees.
-    #[must_use] 
+    #[must_use]
     pub const fn degrees(self) -> f32 {
         // Use a constant for multiplying to ensure accuracy/precision with tool.exe
-        self.0.to_degrees() * 57.29577951308
+        self.0.to_degrees() * f32::FW_DEGREES_PER_RADIAN
     }
 
     /// Get the value as radians.
     ///
     /// This is provided for completion, as this is simply the same thing as using `self.0`.
-    #[must_use] 
+    #[must_use]
     pub const fn radians(self) -> f32 {
         self.0
     }
@@ -952,7 +963,7 @@ pub struct Matrix4x3 {
 
 impl Matrix4x3 {
     /// Instantiate using a [`Matrix3x3`], setting `scale` to 1.0 and `position` to [`Vector3D::ZEROED`]
-    #[must_use] 
+    #[must_use]
     pub const fn from_matrix3x3(matrix3x3: Matrix3x3) -> Self {
         Self {
             scale: 1.0,
@@ -962,7 +973,7 @@ impl Matrix4x3 {
     }
 
     /// Multiply with another transformation.
-    #[must_use] 
+    #[must_use]
     pub const fn multiply(&self, by: &Self) -> Self {
         Self {
             scale: self.scale * by.scale,
@@ -976,13 +987,13 @@ impl Matrix4x3 {
     }
 
     /// Transform a normal using rotation.
-    #[must_use] 
+    #[must_use]
     pub const fn transform_normal(&self, normal: &Vector3D) -> Vector3D {
         self.rotation.transform_vector(normal)
     }
 
     /// Transform a plane applying rotation, scale, and position.
-    #[must_use] 
+    #[must_use]
     pub const fn transform_plane(&self, plane: &Plane3D) -> Plane3D {
         let vector = self.transform_normal(&plane.vector);
         Plane3D {
@@ -992,19 +1003,19 @@ impl Matrix4x3 {
     }
 
     /// Transform the vector, applying scale and rotation.
-    #[must_use] 
+    #[must_use]
     pub fn transform_vector(&self, vector: &Vector3D) -> Vector3D {
         let point_scaled = *vector * self.scale;
         self.rotation.transform_vector(&point_scaled)
     }
 
     /// Transform the point, applying scale, rotation, and position.
-    #[must_use] 
+    #[must_use]
     pub fn transform_point(&self, point: &Vector3D) -> Vector3D {
         self.transform_vector(point) + self.position
     }
     /// Instantiate a matrix from a point and rotation.
-    #[must_use] 
+    #[must_use]
     pub const fn from_point_and_quaternion(point: Vector3D, quaternion: Quaternion) -> Self {
         Self {
             position: point,
@@ -1012,7 +1023,7 @@ impl Matrix4x3 {
         }
     }
     /// Interpolate this matrix by another one by `by` amount.
-    #[must_use] 
+    #[must_use]
     pub fn interpolated(&self, with: &Matrix4x3, by: f32) -> Matrix4x3 {
         let by = by.clamp(0.0, 1.0);
         Self {
