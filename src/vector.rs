@@ -920,6 +920,13 @@ impl Debug for Angle {
     }
 }
 
+impl Neg for Angle {
+    type Output = Angle;
+    fn neg(self) -> Self::Output {
+        Self(-self.0)
+    }
+}
+
 impl PartialOrd for Angle {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         self.0.partial_cmp(&other.0)
