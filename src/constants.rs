@@ -104,3 +104,6 @@ pub const fn per_seconds_squared_to_per_ticks_squared(seconds_squared: f32) -> f
 pub const fn reverse_per_seconds_squared_to_per_ticks_squared(ticks_squared: f32) -> f32 {
     ticks_squared / TICK_RATE_INVERSE / TICK_RATE_INVERSE
 }
+
+/// Length of a detail_object_collection cell in world units.
+pub const DETAIL_OBJECT_WORLD_UNITS_PER_CELL: f32 = 8.0;
