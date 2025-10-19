@@ -1077,4 +1077,11 @@ mod test {
         assert_eq!(Angle::_180_DEG, Angle::from_degrees(180.0), "180 degrees did not match?");
         assert_eq!(Angle::_360_DEG, Angle::from_degrees(360.0), "360 degrees did not match?");
     }
+
+    #[test]
+    fn degrees_to_radians_and_back() {
+        for i in 0..360 {
+            assert_eq!(Angle::from_degrees(i as f32).degrees(), i as f32, "{i} degrees does not translate back")
+        }
+    }
 }
