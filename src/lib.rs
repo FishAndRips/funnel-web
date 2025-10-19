@@ -19,3 +19,4 @@ pub mod string;
 pub mod crc;
 pub mod constants;
 pub mod nudge;
+pub mod fake_utf8;

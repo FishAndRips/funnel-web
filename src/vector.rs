@@ -4,6 +4,7 @@ use core::cmp::Ordering;
 use core::fmt::{Debug, Display, Formatter};
 use core::mem::transmute;
 use core::ops::{Add, Mul, MulAssign, Neg, Sub};
+use crate::fake_utf8::UTF8_DEGREES;
 use crate::float::FloatOps;
 
 /// A matrix with just the forward and up components.
@@ -672,8 +673,8 @@ impl Vector3D {
     #[must_use]
     pub fn as_euler_angles(self) -> Euler2D {
         Euler2D {
-            yaw: self.y.fw_atan2(self.x),
-            pitch: self.z.fw_atan2(Vector2D { x: self.x, y: self.y }.magnitude())
+            yaw: Angle::from_radians(self.y.fw_atan2(self.x)),
+            pitch: Angle::from_radians(self.z.fw_atan2(Vector2D { x: self.x, y: self.y }.magnitude()))
         }
     }
 
@@ -759,8 +760,8 @@ pub struct Vector2DInt {
 #[repr(C)]
 #[expect(missing_docs)]
 pub struct Euler2D {
-    pub yaw: f32,
-    pub pitch: f32
+    pub yaw: Angle,
+    pub pitch: Angle
 }
 
 impl Euler2D {
@@ -768,10 +769,10 @@ impl Euler2D {
     #[inline]
     #[must_use]
     pub fn as_vector(self) -> Vector3D {
-        let sine_pitch = self.pitch.fw_sin();
-        let cosine_pitch = self.pitch.fw_cos();
-        let sine_yaw = self.yaw.fw_sin();
-        let cosine_yaw = self.yaw.fw_cos();
+        let sine_pitch = self.pitch.radians().fw_sin();
+        let cosine_pitch = self.pitch.radians().fw_cos();
+        let sine_yaw = self.yaw.radians().fw_sin();
+        let cosine_yaw = self.yaw.radians().fw_cos();
 
         Vector3D {
             x: cosine_yaw * cosine_pitch,
@@ -801,9 +802,9 @@ impl From<Vector3D> for Euler2D {
 #[repr(C)]
 #[expect(missing_docs)]
 pub struct Euler3D {
-    pub yaw: f32,
-    pub pitch: f32,
-    pub roll: f32
+    pub yaw: Angle,
+    pub pitch: Angle,
+    pub roll: Angle
 }
 
 /// Represents a 2D plane.
@@ -828,6 +829,7 @@ pub struct Plane3D {
 impl Plane3D {
     /// Get the distance `point` is from this plane.
     #[must_use]
+    #[inline]
     pub const fn distance_to_point(self, point: Vector3D) -> f32 {
         point.dot(&self.vector) - self.offset
     }
@@ -865,12 +867,14 @@ impl Angle {
 
     /// Calculate a vertical FoV from a horizontal FoV.
     #[must_use]
+    #[inline]
     pub fn calculate_vertical_fov(self, aspect_ratio: f32) -> Angle {
         Self::from_radians(2.0 * ((self.radians() / 2.0).fw_tan() / aspect_ratio).fw_atan())
     }
 
     /// Calculate a horizontal FoV from a vertical FoV.
     #[must_use]
+    #[inline]
     pub fn calculate_horizontal_fov(self, aspect_ratio: f32) -> Angle {
         Self::from_radians(2.0 * ((self.radians() / 2.0).fw_tan() * aspect_ratio).fw_atan())
     }
@@ -879,26 +883,30 @@ impl Angle {
     ///
     /// The resulting FoV will have the same vertical FoV.
     #[must_use]
+    #[inline]
     pub fn convert_horizontal_fov(self, from_aspect_ratio: f32, to_aspect_ratio: f32) -> Angle {
         self.calculate_vertical_fov(from_aspect_ratio).calculate_horizontal_fov(to_aspect_ratio)
     }
 
-    /// Compute an angle from the given degrees.
+    /// Instantiate an angle from the given degrees.
     #[must_use]
+    #[inline]
     pub const fn from_degrees(deg: f32) -> Self {
         Self::from_radians(deg * f32::FW_RADIANS_PER_DEGREE)
     }
 
-    /// Compute an angle from the given radians.
+    /// Instantiate an angle from the given radians.
     ///
-    /// This is provided for completion, as this is simply the same thing as using `Self(rad)`.
+    /// Note that no conversion is done. This simply wraps the radian value.
     #[must_use]
+    #[inline]
     pub const fn from_radians(rad: f32) -> Self {
         Self(rad)
     }
 
     /// Get the value as degrees.
     #[must_use]
+    #[inline]
     pub const fn degrees(self) -> f32 {
         // Use a constant for multiplying to ensure accuracy/precision with tool.exe
         self.0 * f32::FW_DEGREES_PER_RADIAN
@@ -906,20 +914,21 @@ impl Angle {
 
     /// Get the value as radians.
     ///
-    /// This is provided for completion, as this is simply the same thing as using `self.0`.
+    /// Note that no conversion is done. This simply returns the inner value `self.0`.
     #[must_use]
+    #[inline]
     pub const fn radians(self) -> f32 {
         self.0
     }
 }
 impl Display for Angle {
     fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
-        f.write_fmt(format_args!("{}°", self.degrees()))
+        f.write_fmt(format_args!("{}{}", self.degrees(), UTF8_DEGREES))
     }
 }
 impl Debug for Angle {
     fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
-        Display::fmt(self, f)
+        f.write_fmt(format_args!("Angle({})", self.0))
     }
 }
 
