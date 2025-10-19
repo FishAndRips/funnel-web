@@ -264,7 +264,7 @@ mod test {
         assert_similar!(f32::FW_QUARTER_PI.fw_sin(), core::f64::consts::FRAC_1_SQRT_2, 0.001);
         assert_similar!(0.0.fw_sin(), 0.0, 0.001);
 
-        assert_similar!(f32::FW_PI.fw_cos(), 1.0, 0.001);
+        assert_similar!(f32::FW_PI.fw_cos(), -1.0, 0.001);
         assert_similar!(f32::FW_HALF_PI.fw_cos(), 0.0, 0.001);
         assert_similar!(f32::FW_QUARTER_PI.fw_cos(), core::f64::consts::FRAC_1_SQRT_2, 0.001);
         assert_similar!(0.0.fw_cos(), 1.0, 0.001);
