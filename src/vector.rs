@@ -1066,6 +1066,11 @@ mod test {
 
     #[test]
     fn check_angle_constants() {
+        // It is possible there are floating point implementations that fail this test. If so, tag
+        // editing will be broken when inputting angles on those platforms. We do NOT support them.
+        //
+        // This test should pass on modern x86_64 CPUs with SSE as well as on Apple Silicon (tested
+        // on a Ryzen 9 5950X and an Apple M2).
         assert_eq!(Angle::_0_DEG, Angle::from_degrees(0.0), "0 degrees did not match?");
         assert_eq!(Angle::_45_DEG, Angle::from_degrees(45.0), "45 degrees did not match?");
         assert_eq!(Angle::_90_DEG, Angle::from_degrees(90.0), "90 degrees did not match?");
