@@ -1062,6 +1062,8 @@ const _: () = assert!(size_of::<Matrix4x3>() == 0x34);
 
 #[cfg(test)]
 mod test {
+    use crate::nudge::fix_decimal_rounding;
+    use crate::util::assert_similar;
     use crate::vector::Angle;
 
     #[test]
@@ -1070,7 +1072,7 @@ mod test {
         // editing will be broken when inputting angles on those platforms. We do NOT support them.
         //
         // This test should pass on modern x86_64 CPUs with SSE as well as on Apple Silicon (tested
-        // on a Ryzen 9 5950X and an Apple M2).
+        // on an AMD Ryzen 9 5950X and an Apple M2).
         assert_eq!(Angle::_0_DEG, Angle::from_degrees(0.0), "0 degrees did not match?");
         assert_eq!(Angle::_45_DEG, Angle::from_degrees(45.0), "45 degrees did not match?");
         assert_eq!(Angle::_90_DEG, Angle::from_degrees(90.0), "90 degrees did not match?");
@@ -1080,8 +1082,15 @@ mod test {
 
     #[test]
     fn degrees_to_radians_and_back() {
-        for i in 0..360 {
-            assert_eq!(Angle::from_degrees(i as f32).degrees(), i as f32, "{i} degrees does not translate back")
+        for deg in 0..360 {
+            let degrees_calculated = Angle::from_degrees(deg as f32).degrees();
+
+            // Note: This will be the same in most cases, but some angles like 15˚ won't match, but it
+            // should always be within less than 0.00004˚.
+            assert_similar!(degrees_calculated, deg as f32, 0.00004);
+
+            // And because of that, it can be nudged back.
+            assert_eq!(fix_decimal_rounding(degrees_calculated), deg as f32, "{deg}˚ did not nudge");
         }
     }
 }
