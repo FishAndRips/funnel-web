@@ -901,7 +901,7 @@ impl Angle {
     #[must_use]
     pub const fn degrees(self) -> f32 {
         // Use a constant for multiplying to ensure accuracy/precision with tool.exe
-        self.0.to_degrees() * f32::FW_DEGREES_PER_RADIAN
+        self.0 * f32::FW_DEGREES_PER_RADIAN
     }
 
     /// Get the value as radians.
@@ -1059,3 +1059,17 @@ impl From<Matrix3x3> for Matrix4x3 {
 }
 
 const _: () = assert!(size_of::<Matrix4x3>() == 0x34);
+
+#[cfg(test)]
+mod test {
+    use crate::vector::Angle;
+
+    #[test]
+    fn check_angle_constants() {
+        assert_eq!(Angle::_0_DEG, Angle::from_degrees(0.0), "0 degrees did not match?");
+        assert_eq!(Angle::_45_DEG, Angle::from_degrees(45.0), "45 degrees did not match?");
+        assert_eq!(Angle::_90_DEG, Angle::from_degrees(90.0), "90 degrees did not match?");
+        assert_eq!(Angle::_180_DEG, Angle::from_degrees(180.0), "180 degrees did not match?");
+        assert_eq!(Angle::_360_DEG, Angle::from_degrees(360.0), "360 degrees did not match?");
+    }
+}
