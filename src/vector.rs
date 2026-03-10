@@ -3,7 +3,7 @@
 use core::cmp::Ordering;
 use core::fmt::{Debug, Display, Formatter};
 use core::mem::transmute;
-use core::ops::{Add, Mul, MulAssign, Neg, Sub};
+use core::ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 use crate::fake_utf8::UTF8_DEGREES;
 use crate::float::{FloatOps, TrigScalarFloatOps};
 
@@ -386,6 +386,18 @@ impl Sub<Quaternion> for Quaternion {
     }
 }
 
+impl AddAssign<Quaternion> for Quaternion {
+    fn add_assign(&mut self, value: Self) {
+        *self = *self + value;
+    }
+}
+
+impl SubAssign<Quaternion> for Quaternion {
+    fn sub_assign(&mut self, value: Self) {
+        *self = *self - value;
+    }
+}
+
 impl From<Matrix3x3> for Quaternion {
     fn from(value: Matrix3x3) -> Self {
         value.as_quaternion()
@@ -508,6 +520,28 @@ impl Add<Vector2D> for Vector2D {
             x: self.x + value.x,
             y: self.y + value.y
         }
+    }
+}
+
+impl Sub<Vector2D> for Vector2D {
+    type Output = Self;
+    fn sub(self, value: Vector2D) -> Self {
+        Self {
+            x: self.x - value.x,
+            y: self.y - value.y
+        }
+    }
+}
+
+impl AddAssign<Vector2D> for Vector2D {
+    fn add_assign(&mut self, value: Self) {
+        *self = *self + value;
+    }
+}
+
+impl SubAssign<Vector2D> for Vector2D {
+    fn sub_assign(&mut self, value: Self) {
+        *self = *self - value;
     }
 }
 
@@ -729,6 +763,18 @@ impl Mul<f32> for Vector3D {
 
     fn mul(self, value: f32) -> Self::Output {
         self.scaled(value)
+    }
+}
+
+impl AddAssign<Vector3D> for Vector3D {
+    fn add_assign(&mut self, value: Self) {
+        *self = *self + value;
+    }
+}
+
+impl SubAssign<Vector3D> for Vector3D {
+    fn sub_assign(&mut self, value: Self) {
+        *self = *self - value;
     }
 }
 
