@@ -5,7 +5,7 @@ use core::fmt::{Debug, Display, Formatter};
 use core::mem::transmute;
 use core::ops::{Add, Mul, MulAssign, Neg, Sub};
 use crate::fake_utf8::UTF8_DEGREES;
-use crate::float::FloatOps;
+use crate::float::{FloatOps, TrigScalarFloatOps};
 
 /// A matrix with just the forward and up components.
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -921,6 +921,26 @@ impl Angle {
         self.0
     }
 }
+
+impl TrigScalarFloatOps for Angle {
+    type Scalar = f32;
+
+    #[inline]
+    fn tfw_sin(self) -> Self::Scalar {
+        self.radians().tfw_sin()
+    }
+
+    #[inline]
+    fn tfw_cos(self) -> Self::Scalar {
+        self.radians().tfw_cos()
+    }
+
+    #[inline]
+    fn tfw_tan(self) -> Self::Scalar {
+        self.radians().tfw_tan()
+    }
+}
+
 impl Display for Angle {
     fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         f.write_fmt(format_args!("{}{}", self.degrees(), UTF8_DEGREES))

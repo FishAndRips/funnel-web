@@ -9,7 +9,7 @@ use core::cmp::Ordering;
 /// All methods are prefixed with `fw_` to avoid conflicting with the Rust standard library.
 /// 
 /// These are guaranteed to be accurate to the way Halo calculates its floats, at least on SSE.
-pub trait FloatOps: Copy + Copy {
+pub trait FloatOps: TrigScalarFloatOps {
     /// Approximately equal to 2.0 times pi.
     const FW_2PI: Self;
 
@@ -54,11 +54,14 @@ pub trait FloatOps: Copy + Copy {
     #[must_use]
     fn fw_fabs(self) -> Self;
 
-    /// Calculate the sine of the float.
+    /// Calculate the cosine of the float.
     ///
     /// The float is treated as being in radians.
     #[must_use]
-    fn fw_sin(self) -> Self;
+    #[inline]
+    fn fw_sin(self) -> Self::Scalar {
+        self.tfw_sin()
+    }
 
     /// Calculate the inverse sine (arcsine) of the float.
     ///
@@ -69,7 +72,10 @@ pub trait FloatOps: Copy + Copy {
     ///
     /// The float is treated as being in radians.
     #[must_use]
-    fn fw_cos(self) -> Self;
+    #[inline]
+    fn fw_cos(self) -> Self::Scalar {
+        self.tfw_cos()
+    }
 
     /// Calculate the inverse cosine (arccosine) of the float.
     ///
@@ -77,11 +83,14 @@ pub trait FloatOps: Copy + Copy {
     #[must_use]
     fn fw_acos(self) -> Self;
 
-    /// Calculate the tangent of the float.
+    /// Calculate the cosine of the float.
     ///
     /// The float is treated as being in radians.
     #[must_use]
-    fn fw_tan(self) -> Self;
+    #[inline]
+    fn fw_tan(self) -> Self::Scalar {
+        self.tfw_tan()
+    }
 
     /// Calculate the inverse tangent (arctangent) of the float.
     ///
@@ -128,6 +137,51 @@ pub trait FloatOps: Copy + Copy {
     fn fw_is_close_to_zero_or_less(self) -> bool;
 }
 
+/// Basic trigonometric floating point operations that produce a scalar value.
+///
+/// All methods are prefixed with `tfw_` to avoid conflicting with the Rust standard library.
+pub trait TrigScalarFloatOps: Copy + Clone + PartialEq {
+    /// Output value for all operations.
+    type Scalar: Copy + Clone + PartialEq;
+
+    /// Calculate the sine of the value.
+    #[must_use]
+    fn tfw_sin(self) -> Self::Scalar;
+
+    /// Calculate the cosine of the value.
+    #[must_use]
+    fn tfw_cos(self) -> Self::Scalar;
+
+    /// Calculate the tangent of the value.
+    #[must_use]
+    fn tfw_tan(self) -> Self::Scalar;
+}
+
+impl TrigScalarFloatOps for f32 {
+    type Scalar = f32;
+
+    /// Calculate the sine of the float.
+    ///
+    /// The float is treated as being in radians.
+    fn tfw_sin(self) -> Self::Scalar {
+        libm::sinf(self)
+    }
+
+    /// Calculate the cosine of the float.
+    ///
+    /// The float is treated as being in radians.
+    fn tfw_cos(self) -> Self::Scalar {
+        libm::cosf(self)
+    }
+
+    /// Calculate the tangent of the float.
+    ///
+    /// The float is treated as being in radians.
+    fn tfw_tan(self) -> Self::Scalar {
+        libm::tanf(self)
+    }
+}
+
 impl FloatOps for f32 {
     const FW_2PI: Self = core::f32::consts::TAU;
     const FW_PI: Self = core::f32::consts::PI;
@@ -157,15 +211,9 @@ impl FloatOps for f32 {
         libm::fabsf(self)
     }
     #[inline]
-    fn fw_sin(self) -> Self { libm::sinf(self) }
-    #[inline]
     fn fw_asin(self) -> Self { libm::asinf(self) }
     #[inline]
-    fn fw_cos(self) -> Self { libm::cosf(self) }
-    #[inline]
     fn fw_acos(self) -> Self { libm::acosf(self) }
-    #[inline]
-    fn fw_tan(self) -> Self { libm::tanf(self) }
     #[inline]
     fn fw_atan(self) -> Self { libm::atanf(self) }
     #[inline]
