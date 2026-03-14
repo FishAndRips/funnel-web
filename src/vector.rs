@@ -78,36 +78,44 @@ impl Matrix3x3 {
             let s = (tr + 1.0).fw_sqrt() * 2.0; // S=4*qw
             Quaternion {
                 w: 0.25 * s,
-                x: (self.up.y - self.left.z) / s,
-                y: (self.forward.z - self.up.x) / s,
-                z: (self.left.x - self.forward.y) / s,
+                vector: Vector3D {
+                    x: (self.up.y - self.left.z) / s,
+                    y: (self.forward.z - self.up.x) / s,
+                    z: (self.left.x - self.forward.y) / s,
+                }
             }
         }
         else if (self.forward.x > self.left.y) & (self.forward.x > self.up.z) {
             let s = (1.0 + self.forward.x - self.left.y - self.up.z).fw_sqrt() * 2.0; // S=4*qx
             Quaternion {
                 w: (self.up.y - self.left.z) / s,
-                x: 0.25 * s,
-                y: (self.forward.y + self.left.x) / s,
-                z: (self.forward.z + self.up.x) / s,
+                vector: Vector3D {
+                    x: 0.25 * s,
+                    y: (self.forward.y + self.left.x) / s,
+                    z: (self.forward.z + self.up.x) / s,
+                }
             }
         }
         else if self.left.y > self.up.z  {
             let s = (1.0 + self.left.y - self.forward.x - self.up.z).fw_sqrt() * 2.0; // S=4*qy
             Quaternion {
                 w: (self.forward.z - self.up.x) / s,
-                x: (self.forward.y + self.left.x) / s,
-                y: 0.25 * s,
-                z: (self.left.z + self.up.y) / s,
+                vector: Vector3D {
+                    x: (self.forward.y + self.left.x) / s,
+                    y: 0.25 * s,
+                    z: (self.left.z + self.up.y) / s,
+                }
             }
         }
         else {
             let s = (1.0 + self.up.z - self.forward.x - self.left.y).fw_sqrt() * 2.0; // S=4*qz
             Quaternion {
                 w: (self.left.x - self.forward.y) / s,
-                x: (self.forward.z + self.up.x) / s,
-                y: (self.left.z + self.up.y) / s,
-                z: 0.25 * s,
+                vector: Vector3D {
+                    x: (self.forward.z + self.up.x) / s,
+                    y: (self.left.z + self.up.y) / s,
+                    z: 0.25 * s,
+                }
             }
         }
     }
@@ -172,15 +180,13 @@ impl Mul<Matrix3x3> for Matrix3x3 {
 #[repr(C)]
 #[expect(missing_docs)]
 pub struct Quaternion {
-    pub x: f32,
-    pub y: f32,
-    pub z: f32,
+    pub vector: Vector3D,
     pub w: f32,
 }
 
 impl Quaternion {
     /// Identity quaternion.
-    pub const IDENTITY: Self = Self { x: 0.0, y: 0.0, z: 0.0, w: 1.0 };
+    pub const IDENTITY: Self = Self { vector: Vector3D::ZEROED, w: 1.0 };
 
     /// Square length of the quaternion.
     #[must_use]
@@ -198,19 +204,19 @@ impl Quaternion {
 
         let doubled_inverse_square_length = 2.0 / square_length;
 
-        let inv_x = self.x * doubled_inverse_square_length;
-        let inv_y = self.y * doubled_inverse_square_length;
-        let inv_z = self.z * doubled_inverse_square_length;
+        let inv_x = self.vector.x * doubled_inverse_square_length;
+        let inv_y = self.vector.y * doubled_inverse_square_length;
+        let inv_z = self.vector.z * doubled_inverse_square_length;
 
         let wx = self.w * inv_x;
         let wy = self.w * inv_y;
         let wz = self.w * inv_z;
-        let xx = self.x * inv_x;
-        let xy = self.x * inv_y;
-        let xz = self.x * inv_z;
-        let yy = self.y * inv_y;
-        let yz = self.y * inv_z;
-        let zz = self.z * inv_z;
+        let xx = self.vector.x * inv_x;
+        let xy = self.vector.x * inv_y;
+        let xz = self.vector.x * inv_z;
+        let yy = self.vector.y * inv_y;
+        let yz = self.vector.y * inv_z;
+        let zz = self.vector.z * inv_z;
 
         Matrix3x3 {
             forward: Vector3D {
@@ -241,9 +247,11 @@ impl Quaternion {
 
         let inv = square_length.fw_inverse_sqrt();
         Self {
-            x: self.x * inv,
-            y: self.y * inv,
-            z: self.z * inv,
+            vector: Vector3D {
+                x: self.vector.x * inv,
+                y: self.vector.y * inv,
+                z: self.vector.z * inv,
+            },
             w: self.w * inv
         }
     }
@@ -319,19 +327,19 @@ impl Quaternion {
         self * this_amt + with * with_amt
     }
 
+    /// Return true if this vector is valid.
+    pub fn is_valid(&self) -> bool {
+        self.dot(*self).fw_is_close_to(1.0)
+    }
+
     const fn dot(self, with: Quaternion) -> f32 {
-        let xx = self.x * with.x;
-        let yy = self.y * with.y;
-        let zz = self.z * with.z;
         let ww = self.w * with.w;
-        xx + yy + zz + ww
+        self.vector.dot(&with.vector) + ww
     }
 
     const fn multiplied_by(self, by: f32) -> Quaternion {
         Quaternion {
-            x: self.x * by,
-            y: self.y * by,
-            z: self.z * by,
+            vector: self.vector.multiplied_by(by),
             w: self.w * by,
         }
     }
@@ -341,9 +349,11 @@ impl Neg for Quaternion {
     type Output = Quaternion;
     fn neg(self) -> Self::Output {
         Self {
-            x: -self.x,
-            y: -self.y,
-            z: -self.z,
+            vector: Vector3D {
+                x: -self.vector.x,
+                y: -self.vector.y,
+                z: -self.vector.z,
+            },
             w: -self.w,
         }
     }
@@ -366,9 +376,11 @@ impl Add<Quaternion> for Quaternion {
     type Output = Quaternion;
     fn add(self, rhs: Quaternion) -> Self::Output {
         Self {
-            x: self.x + rhs.x,
-            y: self.y + rhs.y,
-            z: self.z + rhs.z,
+            vector: Vector3D {
+                x: self.vector.x + rhs.vector.x,
+                y: self.vector.y + rhs.vector.y,
+                z: self.vector.z + rhs.vector.z,
+            },
             w: self.w + rhs.w,
         }
     }
@@ -378,9 +390,11 @@ impl Sub<Quaternion> for Quaternion {
     type Output = Quaternion;
     fn sub(self, rhs: Quaternion) -> Self::Output {
         Self {
-            x: self.x - rhs.x,
-            y: self.y - rhs.y,
-            z: self.z - rhs.z,
+            vector: Vector3D {
+                x: self.vector.x - rhs.vector.x,
+                y: self.vector.y - rhs.vector.y,
+                z: self.vector.z - rhs.vector.z,
+            },
             w: self.w - rhs.w,
         }
     }
@@ -489,7 +503,7 @@ impl Vector2D {
     #[must_use]
     pub fn normalized(self) -> Option<Self> {
         let magnitude = self.magnitude();
-        if magnitude.fw_is_close_to(0.0) {
+        if magnitude.fw_is_close_to_zero(){
             None
         }
         else {
@@ -671,7 +685,7 @@ impl Vector3D {
     #[must_use]
     pub fn normalized(self) -> Option<Self> {
         let magnitude = self.magnitude();
-        if magnitude.fw_is_close_to(0.0) {
+        if magnitude.fw_is_close_to_zero() {
             None
         }
         else {
@@ -717,6 +731,16 @@ impl Vector3D {
     #[must_use]
     pub fn apply_offset(self, direction: Vector3D, offset: f32) -> Vector3D {
         self + direction * offset
+    }
+
+    #[inline]
+    #[must_use]
+    const fn multiplied_by(&self, by: f32) -> Vector3D {
+        Self {
+            x: self.x * by,
+            y: self.y * by,
+            z: self.z * by,
+        }
     }
 }
 

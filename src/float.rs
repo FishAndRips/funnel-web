@@ -118,9 +118,13 @@ pub trait FloatOps: TrigScalarFloatOps {
     #[must_use]
     fn fw_floor_to_int(self) -> i32;
 
-    /// Return true if the given value is close to another value.
+    /// Return true if the given value is within 0.001 of another value.
     #[must_use]
     fn fw_is_close_to(self, to: Self) -> bool;
+
+    /// Return true if the given value is within 0.0001 of another value.
+    #[must_use]
+    fn fw_is_closer_to(self, to: Self) -> bool;
 
     /// Return true if the given value is non-NaN and non-infinite.
     #[must_use]
@@ -252,6 +256,10 @@ impl FloatOps for f32 {
     }
     #[inline]
     fn fw_is_close_to(self, to: Self) -> bool {
+        (self - to).abs() < 0.001
+    }
+    #[inline]
+    fn fw_is_closer_to(self, to: Self) -> bool {
         (self - to).abs() < 0.0001
     }
     #[inline]
