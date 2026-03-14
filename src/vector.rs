@@ -1071,6 +1071,13 @@ pub struct Matrix4x3 {
 }
 
 impl Matrix4x3 {
+    /// A [`Matrix4x3`] with a scale of 1 and no position or scale.
+    pub const IDENTITY: Matrix4x3 = Matrix4x3 {
+        scale: 1.0,
+        position: Vector3D::ZEROED,
+        rotation: Matrix3x3::IDENTITY
+    };
+
     /// Instantiate using a [`Matrix3x3`], setting `scale` to 1.0 and `position` to [`Vector3D::ZEROED`]
     #[must_use]
     pub const fn from_matrix3x3(matrix3x3: Matrix3x3) -> Self {
@@ -1123,6 +1130,7 @@ impl Matrix4x3 {
     pub fn transform_point(&self, point: &Vector3D) -> Vector3D {
         self.transform_vector(point) + self.position
     }
+
     /// Instantiate a matrix from a point and rotation.
     #[must_use]
     pub const fn from_point_and_quaternion(point: Vector3D, quaternion: Quaternion) -> Self {
@@ -1131,6 +1139,7 @@ impl Matrix4x3 {
             ..Self::from_matrix3x3(quaternion.as_matrix())
         }
     }
+
     /// Interpolate this matrix by another one by `by` amount.
     #[must_use]
     pub fn interpolated(&self, with: &Matrix4x3, by: f32) -> Matrix4x3 {
@@ -1140,6 +1149,49 @@ impl Matrix4x3 {
             position: self.position.linear_interpolated(with.position, by),
             rotation: self.rotation.interpolated(with.rotation, by)
         }
+    }
+
+    /// Invert the matrix.
+    #[must_use]
+    pub fn inverted(&self) -> Matrix4x3 {
+        if self.scale == 0.0 {
+            // The original game returns something that is zeroed out, which makes no sense and
+            // could not possibly be useful in any way.
+            //
+            // return Matrix4x3 {
+            //     scale: 0.0,
+            //     position: Vector3D::ZEROED,
+            //     rotation: Matrix3x3 {
+            //         forward: Vector3D::ZEROED,
+            //         left: Vector3D::ZEROED,
+            //         up: Vector3D::ZEROED,
+            //     }
+            // }
+
+            return Matrix4x3 {
+                scale: 1.0,
+                position: Vector3D::ZEROED,
+                rotation: Matrix3x3::IDENTITY
+            }
+        }
+
+        let mut result = *self;
+        result.position = -result.position;
+
+        if self.scale != 1.0 {
+            result.scale = 1.0 / result.scale;
+            result.position *= result.scale;
+        }
+
+        core::mem::swap(&mut result.rotation.left.x, &mut result.rotation.forward.y);
+        core::mem::swap(&mut result.rotation.up.x, &mut result.rotation.forward.z);
+        core::mem::swap(&mut result.rotation.up.y, &mut result.rotation.left.z);
+
+        result.position.x = result.position.x * result.rotation.forward.x + result.position.y * result.rotation.left.x + result.position.z * result.rotation.up.x;
+        result.position.y = result.position.x * result.rotation.forward.y + result.position.y * result.rotation.left.y + result.position.z * result.rotation.up.y;
+        result.position.z = result.position.x * result.rotation.forward.z + result.position.y * result.rotation.left.z + result.position.z * result.rotation.up.z;
+
+        result
     }
 }
 
