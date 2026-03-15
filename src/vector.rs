@@ -525,6 +525,16 @@ impl Vector2D {
     pub fn apply_offset(self, direction: Vector2D, offset: f32) -> Vector2D {
         self + direction * offset
     }
+
+    /// Compress to a 32-bit value.
+    #[inline]
+    #[must_use]
+    pub fn compress(self) -> CompressedVector2D {
+        CompressedVector2D {
+            x: self.x.fw_compress_clamped(),
+            y: self.y.fw_compress_clamped()
+        }
+    }
 }
 
 impl Add<Vector2D> for Vector2D {
@@ -731,6 +741,17 @@ impl Vector3D {
     #[must_use]
     pub fn apply_offset(self, direction: Vector3D, offset: f32) -> Vector3D {
         self + direction * offset
+    }
+
+    /// Compress the vector into 32 bits, clamping everything.
+    #[must_use]
+    pub fn compress(self) -> CompressedVector3D {
+        // Not doing it this way leads to death.
+        let x = (self.x.clamp(-1.0, 1.0) * 1023.5).fw_floor().fw_round_ties_even_to_int() & 0x7FF;
+        let y = (self.y.clamp(-1.0, 1.0) * 1023.5).fw_floor().fw_round_ties_even_to_int() & 0x7FF;
+        let z = (self.z.clamp(-1.0, 1.0) * 511.5).fw_floor().fw_round_ties_even_to_int() & 0x3FF;
+
+        CompressedVector3D((z << 22) | (y << 11) | x)
     }
 
     #[inline]
@@ -1039,15 +1060,37 @@ impl PartialOrd for Angle {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Copy, Clone, Debug, PartialEq, Default)]
 #[repr(transparent)]
-pub struct CompressedFloat(pub u16);
+pub struct CompressedFloat(pub i16);
+
+impl CompressedFloat {
+    /// Decompress back into a float.
+    #[must_use]
+    pub fn decompress(self) -> f32 {
+        ((self.0 as f32) * 2.0 + 1.0) / 65535.0
+    }
+}
 
 /// Represents a [`Vector2D`] compressed into 32 bits.
-///
-/// Internally it is `Y8.X8`
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Copy, Clone, Debug, PartialEq, Default)]
-#[repr(transparent)]
-pub struct CompressedVector2D(pub u32);
+#[repr(C)]
+#[allow(missing_docs)]
+pub struct CompressedVector2D {
+    pub x: CompressedFloat,
+    pub y: CompressedFloat
+}
+
+impl CompressedVector2D {
+    /// Decompress the vector.
+    #[must_use]
+    #[inline]
+    pub fn decompress(self) -> Vector2D {
+        Vector2D {
+            x: self.x.decompress(),
+            y: self.y.decompress()
+        }
+    }
+}
 
 /// Represents a [`Vector3D`] compressed into 32 bits.
 ///
@@ -1055,7 +1098,26 @@ pub struct CompressedVector2D(pub u32);
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Copy, Clone, Debug, PartialEq, Default)]
 #[repr(transparent)]
-pub struct CompressedVector3D(pub u32);
+pub struct CompressedVector3D(pub i32);
+
+impl CompressedVector3D {
+    /// Decompress the vector.
+    #[must_use]
+    pub fn decompress(self) -> Vector3D {
+        // Not doing it this way leads to death.
+        let vector = self.0 as u32;
+
+        let x_part = ((vector & 0b00000000000000000000011111111111) << 21) as i32;
+        let y_part = ((vector & 0b00000000001111111111100000000000) << 10) as i32;
+        let z_part = (vector & 0b11111111110000000000000000000000) as i32;
+
+        Vector3D {
+            x: (x_part as f32 / 1048576.0 + 1.0) / 2047.0,
+            y: (y_part as f32 / 1048576.0 + 1.0) / 2047.0,
+            z: (z_part as f32 / 2097152.0 + 1.0) / 1023.0
+        }
+    }
+}
 
 /// Matrix3x3 with position and scale component.
 ///

@@ -3,6 +3,7 @@
 //! See [FloatOps]'s documentation.
 
 use core::cmp::Ordering;
+use crate::vector::CompressedFloat;
 
 /// Adds basic floating point operations.
 /// 
@@ -139,6 +140,15 @@ pub trait FloatOps: TrigScalarFloatOps {
     /// Return true if the given value is close to 0.0 or less.
     #[must_use]
     fn fw_is_close_to_zero_or_less(self) -> bool;
+
+    /// Floor the scalar value.
+    #[must_use]
+    fn fw_floor(self) -> Self;
+
+    /// Compress the float.
+    ///
+    /// The float will be clamped if it is not within that range.
+    fn fw_compress_clamped(self) -> CompressedFloat;
 }
 
 /// Basic trigonometric floating point operations that produce a scalar value.
@@ -255,6 +265,10 @@ impl FloatOps for f32 {
         }
     }
     #[inline]
+    fn fw_floor(self) -> f32 {
+        libm::floorf(self)
+    }
+    #[inline]
     fn fw_is_close_to(self, to: Self) -> bool {
         (self - to).abs() < 0.001
     }
@@ -273,6 +287,11 @@ impl FloatOps for f32 {
     #[inline]
     fn fw_is_close_to_zero_or_less(self) -> bool {
         self < 0.0001
+    }
+    #[inline]
+    fn fw_compress_clamped(self) -> CompressedFloat {
+        // This is how you get the helicopter.
+        CompressedFloat((self.clamp(-1.0, 1.0) * 32767.0).fw_floor().fw_round_ties_even_to_int() as i16)
     }
 }
 

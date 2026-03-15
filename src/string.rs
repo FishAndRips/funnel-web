@@ -119,7 +119,7 @@ impl<const LEN: usize> ASCIIString<LEN> {
 
     /// Get the string data as a CStr.
     #[inline]
-    #[must_use] 
+    #[must_use]
     pub const fn as_cstr(&self) -> &CStr {
         // SAFETY: All constructors ensure that this is a null-terminated C string.
         unsafe {
