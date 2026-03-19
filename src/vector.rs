@@ -898,6 +898,53 @@ pub struct Euler3D {
     pub roll: Angle
 }
 
+impl Euler3D {
+    /// Convert to a matrix.
+    #[must_use]
+    pub fn to_matrix(self) -> Matrix3x3 {
+        let cos_roll = self.roll.tfw_cos();
+        let sin_roll = self.roll.tfw_sin();
+        let cos_pitch = self.pitch.tfw_cos();
+        let sin_pitch = self.pitch.tfw_sin();
+        let cos_yaw = self.yaw.tfw_cos();
+        let sin_yaw = self.yaw.tfw_sin();
+
+        let cos_roll_sin_pitch = cos_roll * sin_pitch;
+        let sin_roll_cos_pitch = sin_roll * sin_pitch;
+
+        // TODO: Verify!!!
+        Matrix3x3 {
+            forward: Vector3D {
+                x: cos_pitch * cos_yaw,
+                y: -sin_roll_cos_pitch * cos_yaw + cos_roll * sin_yaw,
+                z: cos_roll_sin_pitch * cos_yaw + sin_roll * sin_yaw
+            },
+            left: Vector3D {
+                x: -cos_pitch * sin_yaw,
+                y: sin_roll_cos_pitch * sin_yaw + cos_roll * cos_yaw,
+                z: -cos_roll_sin_pitch * sin_yaw + sin_roll * cos_yaw,
+            },
+            up: Vector3D {
+                x: -sin_pitch,
+                y: -sin_roll * cos_pitch,
+                z: cos_roll * cos_pitch,
+            },
+        }
+    }
+}
+
+impl From<Euler3D> for Matrix3x3 {
+    fn from(value: Euler3D) -> Self {
+        value.to_matrix()
+    }
+}
+
+impl From<Euler3D> for Matrix4x3 {
+    fn from(value: Euler3D) -> Self {
+        value.to_matrix().into()
+    }
+}
+
 /// Represents a 2D plane.
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Copy, Clone, Debug, PartialEq, Default)]
