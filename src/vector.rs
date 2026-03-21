@@ -63,6 +63,16 @@ impl Matrix3x3 {
         }
     }
 
+    /// Instantiate a Matrix3x3 from the forward and up vectors.
+    #[must_use]
+    pub const fn from_vectors(forward: Vector3D, up: Vector3D) -> Self {
+        Self {
+            forward,
+            up,
+            left: up.cross_product(forward)
+        }
+    }
+
     /// Interpolate this matrix by another one by `by` amount.
     #[must_use]
     pub fn interpolated(self, with: Matrix3x3, by: f32) -> Matrix3x3 {
@@ -122,7 +132,7 @@ impl Matrix3x3 {
 
     /// Transform the vector.
     #[must_use]
-    pub const fn transform_vector(&self, normal: &Vector3D) -> Vector3D {
+    pub const fn transform_vector(&self, normal: Vector3D) -> Vector3D {
         Vector3D {
             x: normal.x * self.forward.x + normal.y * self.left.x + normal.z * self.up.x,
             y: normal.x * self.forward.y + normal.y * self.left.y + normal.z * self.up.y,
@@ -334,7 +344,7 @@ impl Quaternion {
 
     const fn dot(self, with: Quaternion) -> f32 {
         let ww = self.w * with.w;
-        self.vector.dot(&with.vector) + ww
+        self.vector.dot(with.vector) + ww
     }
 
     const fn multiplied_by(self, by: f32) -> Quaternion {
@@ -596,6 +606,43 @@ pub struct Cube3D {
     pub back: f32
 }
 
+/// Represents a cuboid, but not the same as [`Cube3D`] for some reason.
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Copy, Clone, Debug, PartialEq, Default)]
+#[repr(C)]
+#[expect(missing_docs)]
+pub struct Rectangle3D {
+    pub x_from: f32,
+    pub x_to: f32,
+    pub y_from: f32,
+    pub y_to: f32,
+    pub z_from: f32,
+    pub z_to: f32,
+}
+
+impl Rectangle3D {
+    /// Return true if the point is inside the rectangle.
+    #[inline]
+    #[must_use]
+    pub const fn test_point(self, point: Vector3D) -> bool {
+        point.x > self.x_from
+            && point.y > self.y_from
+            && point.z > self.z_from
+            && point.x < self.x_to
+            && point.y < self.y_to
+            && point.z < self.z_to
+    }
+}
+
+/// Test a trigger volume for a scenario tag.
+#[must_use]
+pub fn test_rotated_bounding_box(forward: Vector3D, up: Vector3D, position: Vector3D, extent: Vector3D, test_point: Vector3D) -> bool {
+    let transformation = Matrix4x3::from_point_and_vectors(position, forward, up);
+    let modified = transformation.inverse_transform_point(test_point);
+
+    modified.x > 0.0 && modified.y > 0.0 && modified.z > 0.0 && modified.x < extent.x && modified.y < extent.y && modified.z < extent.z
+}
+
 /// Represents a vector with four components.
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Copy, Clone, Debug, PartialEq, Default)]
@@ -651,7 +698,7 @@ impl Vector3D {
 
     /// Return the dot product with another vector.
     #[must_use]
-    pub const fn dot(self, other: &Vector3D) -> f32 {
+    pub const fn dot(self, other: Vector3D) -> f32 {
         self.x * other.x + self.y * other.y + self.z * other.z
     }
 
@@ -670,7 +717,7 @@ impl Vector3D {
     /// This is cheaper than calling [`magnitude`](Self::magnitude).
     #[must_use]
     pub const fn magnitude_squared(self) -> f32 {
-        self.dot(&self)
+        self.dot(self)
     }
 
     /// Get the magnitude.
@@ -969,7 +1016,7 @@ impl Plane3D {
     #[must_use]
     #[inline]
     pub const fn distance_to_point(self, point: Vector3D) -> f32 {
-        point.dot(&self.vector) - self.offset
+        point.dot(self.vector) - self.offset
     }
 }
 
@@ -1213,31 +1260,52 @@ impl Matrix4x3 {
 
     /// Transform a normal using rotation.
     #[must_use]
-    pub const fn transform_normal(&self, normal: &Vector3D) -> Vector3D {
+    pub const fn transform_normal(&self, normal: Vector3D) -> Vector3D {
         self.rotation.transform_vector(normal)
     }
 
     /// Transform a plane applying rotation, scale, and position.
     #[must_use]
     pub const fn transform_plane(&self, plane: &Plane3D) -> Plane3D {
-        let vector = self.transform_normal(&plane.vector);
+        let vector = self.transform_normal(plane.vector);
         Plane3D {
             vector,
-            offset: self.scale * plane.offset + self.position.dot(&vector)
+            offset: self.scale * plane.offset + self.position.dot(vector)
         }
     }
 
     /// Transform the vector, applying scale and rotation.
     #[must_use]
-    pub fn transform_vector(&self, vector: &Vector3D) -> Vector3D {
-        let point_scaled = *vector * self.scale;
-        self.rotation.transform_vector(&point_scaled)
+    pub fn transform_vector(&self, vector: Vector3D) -> Vector3D {
+        let point_scaled = vector * self.scale;
+        self.rotation.transform_vector(point_scaled)
     }
 
     /// Transform the point, applying scale, rotation, and position.
     #[must_use]
-    pub fn transform_point(&self, point: &Vector3D) -> Vector3D {
+    pub fn transform_point(&self, point: Vector3D) -> Vector3D {
         self.transform_vector(point) + self.position
+    }
+
+    /// Transform the point, un-applying transform, scale, and then rotation.
+    #[must_use]
+    pub fn inverse_transform_point(&self, point: Vector3D) -> Vector3D {
+        if self.scale == 0.0 {
+            return Vector3D::ZEROED;
+        }
+
+        let mut point = point - self.position;
+        if self.scale != 1.0 {
+            // We have this perfectly nice division operator.
+            //
+            // But we also have this game we want to be accurate for.
+            //
+            // Only change how this works if you want it to be wrong!!!!
+            let scale_reciprocol = 1.0 / self.scale;
+            point *= scale_reciprocol;
+        }
+
+        self.rotation.transform_vector(point)
     }
 
     /// Instantiate a matrix from a point and rotation.
@@ -1246,6 +1314,16 @@ impl Matrix4x3 {
         Self {
             position: point,
             ..Self::from_matrix3x3(quaternion.as_matrix())
+        }
+    }
+
+    /// Instantiate a matrix from a point and the forward and up vectors.
+    #[must_use]
+    pub const fn from_point_and_vectors(point: Vector3D, forward: Vector3D, up: Vector3D) -> Self {
+        Self {
+            scale: 1.0,
+            position: point,
+            rotation: Matrix3x3::from_vectors(forward, up)
         }
     }
 
