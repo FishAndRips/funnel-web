@@ -1,7 +1,7 @@
 [package]
 name = "funnel-web"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 license = "GPL-3.0-only"
 repository = "https://github.com/FishAndRips/funnel-web"
 
@@ -13,6 +13,7 @@ serde = ["dep:serde"]
 libm = { version = "0.2.15", default-features = false }
 serde = { version = "1.0", optional = true, features = ["derive"] }
 spin = "0.10.0"
+tinyvec = "1.11.0"
 
 [lints.clippy]
 must_use_candidate = "warn"

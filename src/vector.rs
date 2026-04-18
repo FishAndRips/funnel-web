@@ -465,7 +465,7 @@ impl Vector2D {
     /// Return the dot product with another vector.
     #[inline]
     #[must_use]
-    pub const fn dot(self, other: &Self) -> f32 {
+    pub const fn dot(self, other: Self) -> f32 {
         self.x * other.x + self.y * other.y
     }
 
@@ -475,7 +475,7 @@ impl Vector2D {
     #[inline]
     #[must_use]
     pub const fn magnitude_squared(self) -> f32 {
-        self.dot(&self)
+        self.dot(self)
     }
 
     /// Get the magnitude.
@@ -485,7 +485,7 @@ impl Vector2D {
     #[inline]
     #[must_use]
     pub fn magnitude(self) -> f32 {
-        self.dot(&self).fw_sqrt()
+        self.dot(self).fw_sqrt()
     }
 
     /// Multiply all components with `amount`.
@@ -803,13 +803,81 @@ impl Vector3D {
 
     #[inline]
     #[must_use]
-    const fn multiplied_by(&self, by: f32) -> Vector3D {
+    const fn multiplied_by(self, by: f32) -> Vector3D {
         Self {
             x: self.x * by,
             y: self.y * by,
             z: self.z * by,
         }
     }
+
+    /// Get the projection of the vector.
+    #[must_use]
+    pub const fn projection(self) -> Vector3DComponent {
+        let x_abs = self.x.abs();
+        let y_abs = self.y.abs();
+        let z_abs = self.z.abs();
+
+        if z_abs >= y_abs && z_abs >= x_abs {
+            Vector3DComponent::Z
+        }
+        else if y_abs >= x_abs {
+            Vector3DComponent::Y
+        }
+        else {
+            Vector3DComponent::X
+        }
+    }
+
+    /// Project a 2D point.
+    #[must_use]
+    pub const fn project(self, projection: Vector3DComponent, positive: bool) -> Vector2D {
+        const MAPPINGS: [[(Vector3DComponent, Vector3DComponent); 2]; 3] = [
+            [
+                (Vector3DComponent::Z, Vector3DComponent::Y),
+                (Vector3DComponent::Y, Vector3DComponent::Z),
+            ],
+            [
+                (Vector3DComponent::X, Vector3DComponent::Z),
+                (Vector3DComponent::Z, Vector3DComponent::X),
+            ],
+            [
+                (Vector3DComponent::Y, Vector3DComponent::X),
+                (Vector3DComponent::X, Vector3DComponent::Y),
+            ]
+        ];
+
+        let (x, y) = MAPPINGS[projection as usize][positive as usize];
+        Vector2D {
+            x: self.get_component(x),
+            y: self.get_component(y),
+        }
+    }
+
+    /// Get the component.
+    #[must_use]
+    #[inline]
+    pub const fn get_component(&self, component: Vector3DComponent) -> f32 {
+        match component {
+            Vector3DComponent::X => self.x,
+            Vector3DComponent::Y => self.y,
+            Vector3DComponent::Z => self.z
+        }
+    }
+
+    /// Return true if the component is positive (> 0.0)
+    #[must_use]
+    #[inline]
+    pub const fn component_is_positive(&self, component: Vector3DComponent) -> bool {
+        self.get_component(component) > 0.0
+    }
+}
+
+/// Projection derived from [`Vector3D::projection`]
+#[derive(Copy, Clone, PartialEq, Debug)]
+#[expect(missing_docs)]
+pub enum Vector3DComponent {
+    X, Y, Z
 }
 
 impl Default for Vector3D {
@@ -1000,6 +1068,14 @@ impl From<Euler3D> for Matrix4x3 {
 pub struct Plane2D {
     pub offset: f32,
     pub vector: Vector2D
+}
+impl Plane2D {
+    /// Get the distance `point` is from this plane.
+    #[must_use]
+    #[inline]
+    pub const fn distance_to_point(self, point: Vector2D) -> f32 {
+        point.dot(self.vector) - self.offset
+    }
 }
 
 /// Represents a 3D plane.
